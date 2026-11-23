@@ -22,9 +22,12 @@ static void watch(v34ans_t *a)
 {
     int32_t m;
     if (a->w_since < INT32_MAX) a->w_since++;
-    if (a->state != V34A_DATA || !a->dx.rx_ready) { a->w_data = a->w_low = 0; return; }
+    /* a renegotiation only pauses the watch: a slide that renegotiates down every
+       minute or so would otherwise never stay low for W_LOW at a stretch */
+    if (a->state == V34A_RENEG || (a->state == V34A_DATA && !a->dx.rx_ready)) return;
+    if (a->state != V34A_DATA) { a->w_data = a->w_low = 0; return; }
     m = (a->dx.rx.mse > 0 ? a->dx.rx.mse : 1) << 12;
-    if (a->w_data++ == 0) a->w_avg = m;                 /* afresh after each (re)start */
+    if (a->w_data++ == 0) a->w_avg = m;                 /* afresh after each start and retrain */
     else a->w_avg += (m - a->w_avg) >> W_SHIFT;
     if (a->w_data < W_SETTLE) return;
     if (!a->w_best || a->w_avg < a->w_best) a->w_best = a->w_avg;

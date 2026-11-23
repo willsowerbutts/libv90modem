@@ -358,6 +358,31 @@ int main(void)
             data_ok(3);
             report("after the watch's retrain");
         }
+        /* the same, and renegotiations every 20 s as the SNR slides (a real
+         * one did, well within the 50 s the watch needs to settle and see
+         * it low): a renegotiation only pauses the watch */
+        if (call_up("far echo, moves during training, renegotiations", &lc, 0, 0, 24000)) {
+            int rx0 = A.rx_bitrate, renegs = 0;
+            run(8000L * 25);
+            L.c.d_ac += 160;
+            for (t = 0; t < 8000L * 15 && !(A.v34.state == V34A_TRAINING && A.v34.dx.state >= DX_P3_J); t += 8) run(8);
+            L.c.d_ac += 160;
+            CHECK_EQ_I(to_data(30000), 1);
+            CHECK_EQ_I(A.retrains, 1);
+            for (t = 0; t < 8000L * 90 && A.retrains == 1; t += 800) {
+                if (t % (8000L * 20) == 0 && O.v34.dx.state == DX_DATA) { CHECK_EQ_I(orig_renegotiate(&O, 0), 0); renegs++; }
+                run(800);
+            }
+            CHECK_EQ_I(to_data(30000), 1);
+            printf("  path moved during the retrain's training, renegotiations every 20 s: the watch retrained %.0f s later after %d renegotiations; receives %d bit/s (was %d)\n",
+                   t / 8000.0, renegs, A.rx_bitrate, rx0);
+            CHECK_EQ_I(A.retrains, 2);
+            CHECK(renegs >= 2);
+            CHECK(t < 8000L * 60);
+            CHECK(A.rx_bitrate >= rx0 - 2400);
+            data_ok(3);
+            report("after the watch's retrain");
+        }
         retrain_on_step = 0;
         lc = good; lc.loop = LOOP_LONG; lc.nloop = 3;
         if (call_up("long loop (13 dB down at 3 kHz)", &lc, 0, 0, 9600)) {
