@@ -205,6 +205,14 @@ typedef struct {
                                        driver's buffering), >= 0; -1 = measure it in every start-up.
                                        Calling V.90 / V.92: never measured, used as given, 0 .. 511
                                        (-1 is taken as 0, more as 511) */
+    int            retrain_on_step; /* V.34, either role: when what we receive falls in a step (6 dB
+                                       below what it was a second or so before), retrain rather
+                                       than renegotiate down. The echo cancellers do not
+                                       adapt in data mode and only a retrain trains them again: for
+                                       a path whose echo can move mid-call, as through a VoIP
+                                       jitter buffer that grows by a packet. Also retrain when a
+                                       rate renegotiation's training fails, rather than end the
+                                       call. Default 0 */
     v90m_getbit_fn getbit;
     v90m_putbit_fn putbit;
     v90m_event_fn  on_event;        /* may be NULL: poll v90m_get_state() instead */

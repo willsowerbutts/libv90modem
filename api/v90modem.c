@@ -137,6 +137,7 @@ int v90m_reset(v90m_t *m, const v90m_cfg *cfg)
          * V.90 likewise: max_down the V.34 upstream, max_up the PCM downstream */
         oc.max_tx_bps = cfg->max_down_bps; oc.max_rx_bps = cfg->max_up_bps;
         oc.echo_delay = cfg->echo_delay;
+        oc.retrain_on_step = cfg->retrain_on_step != 0;
         /* V.34 sends codec values, as the answering side's does */
         oc.law = cfg->alaw ? 2 : 1;
         oc.getbit = cfg->getbit;
@@ -153,6 +154,7 @@ int v90m_reset(v90m_t *m, const v90m_cfg *cfg)
         ac.user = cfg->user;
         ac.rx_linear = cfg->codec_linear_rx != 0;
         ac.max_tx_code = cfg->max_tx_code;
+        ac.retrain_on_step = cfg->retrain_on_step != 0;
         answer_init(&m->u.a, &ac);
         if (cfg->alaw) {
             /* the Phase 2 defaults with the law changed */

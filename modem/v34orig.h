@@ -54,6 +54,8 @@ typedef struct {
     v34orig_state state;
     int           error;
     int32_t       t;
+    int           retrain_on_step;  /* v34dx_cfg.retrain_on_step; set after v34orig_init (not in the
+                                       cfg: here it fills padding, and the modem's size is pinned) */
     p2call_t      p2;
     v34dx_t       dx;
     info0_t       info0a; int have0a;

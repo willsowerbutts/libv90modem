@@ -241,6 +241,7 @@ static void v34_cfg(const answer_t *a, v34ans_cfg *c)
     c->getbit = a->cfg.getbit; c->putbit = a->cfg.putbit; c->user = a->cfg.user;
     c->x2 = v8ans_x2(&a->v8);
     c->k56 = a->k56_agreed;
+    c->retrain_on_step = a->cfg.retrain_on_step;
 }
 
 /* V.90 Phase 2 is done and INFO1a selects V.34 (bits 37:39 in 0..5; V.90
