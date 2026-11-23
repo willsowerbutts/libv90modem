@@ -72,6 +72,16 @@ typedef struct {
     int          retrains_ours;     /* ... of all, those we began */
     int          connects;          /* times data mode was reached (start-up, retrains) */
     int          from_v90;          /* started by v34ans_init_call: no Phase 2 of ours */
+    /* retrain_on_step's watch on the long run: a circuit whose achievable
+     * SNR does not change, held well below its best for long, has its echo
+     * misplaced (drifted, or trained where it was a moment before), with no
+     * step for v34dx to see. The best outlives retrains, so it lives here. */
+    int32_t      w_avg;             /* dx.rx.mse in data mode, Q12, over some 8 s */
+    int32_t      w_best;            /* the lowest settled w_avg of the call; 0 = none yet */
+    int32_t      w_data;            /* samples since data mode last began */
+    int32_t      w_low;             /* samples w_avg has been 6 dB or more worse than w_best */
+    int32_t      w_since, w_hold;   /* samples since the watch last retrained; how long it waits */
+    int          w_fails;           /* its retrains in a row that did not bring the best back */
 } v34ans_t;
 
 void    v34ans_init(v34ans_t *a, const v34ans_cfg *cfg);
