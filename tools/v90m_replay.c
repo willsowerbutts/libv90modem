@@ -2,9 +2,11 @@
  * it made of it, phase by phase. The tool to run on a recording that comes
  * with a bug report (README: "Reporting a bug").
  *
- *   v90m-replay [-a] [-9] [-x] [-k] [-u BPS] [-d BPS] [-l DBM0] [-e SAMPLES] [-P CODE] RECORDING
+ *   v90m-replay [-a] [-V] [-s] [-9] [-x] [-k] [-u BPS] [-d BPS] [-l DBM0] [-r RMS] [-t SAMPLE] [-e SAMPLES] [-P CODE] RECORDING
  *
  *   -a          A-law line (mu-law otherwise)
+ *   -V          V.90 not offered (V.34 and below)
+ *   -s          retrain_on_step
  *   -9          V.92 offered (PCM upstream up to 48000 bit/s unless -u)
  *   -x          x2 offered
  *   -k          K56flex offered: V.8bis comes first, and what the recording
@@ -12,6 +14,10 @@
  *               then hears silence and gives up)
  *   -u, -d BPS  upstream / downstream rate ceilings (33600 or 48000; 56000)
  *   -l DBM0     transmit level (default -12)
+ *   -r RMS      transmit level as v90m_cfg.tx_level (3000: its default)
+ *   -t SAMPLE   the answer tone starts at this sample of the recording
+ *               (default: the first sound after 200 ms of silence, as v90d
+ *               records)
  *   -e SAMPLES  the echo delay, as the recording modem was told (default: measured)
  *   -P CODE     INFO0d maximum power code, 1..31 (default 23)
  * The modem must be set up as the recording modem was: what it hears holds
@@ -113,27 +119,30 @@ static void x2_down(const x2tx_t *t, uint8_t sent)
     }
 }
 
-static int opt_alaw, opt_v92, opt_x2, opt_k56, opt_dbm0 = -12, opt_up, opt_down = 56000, opt_echo = -1, opt_code;
+static long opt_tone = -1;
+static int opt_rms, opt_alaw, opt_nov90, opt_step, opt_v92, opt_x2, opt_k56, opt_dbm0 = -12, opt_up, opt_down = 56000, opt_echo = -1, opt_code;
 
 static void configure(v90m_cfg *c, int lin)
 {
     v90m_cfg_default(c);
-    c->modulations = V90M_MOD_V21 | V90M_MOD_V22 | V90M_MOD_V32BIS | V90M_MOD_V34 | V90M_MOD_V90 | (opt_v92 ? V90M_MOD_V92 : 0)
+    c->modulations = V90M_MOD_V21 | V90M_MOD_V22 | V90M_MOD_V32BIS | V90M_MOD_V34 | (opt_nov90 ? 0 : V90M_MOD_V90)
+                     | (opt_v92 ? V90M_MOD_V92 : 0)
                      | (opt_x2 ? V90M_MOD_X2 : 0) | (opt_k56 ? V90M_MOD_K56 : 0);
-    c->tx_level = level_rms(opt_dbm0);
+    c->tx_level = opt_rms ? opt_rms : level_rms(opt_dbm0);
     c->max_down_bps = opt_down;
     c->max_up_bps = opt_up ? opt_up : opt_v92 ? 48000 : 33600;
     c->alaw = opt_alaw;
     c->codec_linear_rx = lin;
     c->echo_delay = opt_echo;
     c->max_tx_code = opt_code;
+    c->retrain_on_step = opt_step;
     c->getbit = get;
     c->putbit = put;
 }
 
 int main(int argc, char **argv)
 {
-    static uint8_t file[(24 << 20) + 8];
+    static uint8_t file[(256 << 20) + 8];  /* 3 hours of 16-bit linear receive */
     static long dsec[120];
     rec_t r; v90m_cfg c; v90m_ec_cfg ecc; v90m_t *m; answer_t *a;
     long len, ans, k0, i, diff = 0, first = -1;
@@ -143,18 +152,22 @@ int main(int argc, char **argv)
     for (arg = 1; arg < argc && argv[arg][0] == '-' && argv[arg][1]; arg++) {
         const char *o = argv[arg];
         if (!strcmp(o, "-a")) opt_alaw = 1;
+        else if (!strcmp(o, "-V")) opt_nov90 = 1;
+        else if (!strcmp(o, "-s")) opt_step = 1;
         else if (!strcmp(o, "-9")) opt_v92 = 1;
         else if (!strcmp(o, "-x")) opt_x2 = 1;
         else if (!strcmp(o, "-k")) opt_k56 = 1;
         else if (arg + 1 < argc && !strcmp(o, "-u")) opt_up = atoi(argv[++arg]);
         else if (arg + 1 < argc && !strcmp(o, "-d")) opt_down = atoi(argv[++arg]);
         else if (arg + 1 < argc && !strcmp(o, "-l")) opt_dbm0 = atoi(argv[++arg]);
+        else if (arg + 1 < argc && !strcmp(o, "-r")) opt_rms = atoi(argv[++arg]);
+        else if (arg + 1 < argc && !strcmp(o, "-t")) opt_tone = atol(argv[++arg]);
         else if (arg + 1 < argc && !strcmp(o, "-e")) opt_echo = atoi(argv[++arg]);
         else if (arg + 1 < argc && !strcmp(o, "-P")) opt_code = atoi(argv[++arg]);
         else break;
     }
     if (arg >= argc || !(f = fopen(argv[arg], "rb"))) {
-        fprintf(stderr, "usage: v90m-replay [-a] [-9] [-x] [-k] [-u BPS] [-d BPS] [-l DBM0] [-e SAMPLES] [-P CODE] RECORDING\n");
+        fprintf(stderr, "usage: v90m-replay [-a] [-V] [-s] [-9] [-x] [-k] [-u BPS] [-d BPS] [-l DBM0] [-r RMS] [-t SAMPLE] [-e SAMPLES] [-P CODE] RECORDING\n");
         return 2;
     }
     len = (long)fread(file, 1, sizeof file, f);
@@ -181,7 +194,7 @@ int main(int argc, char **argv)
         v90m_process_g711(m, &s, &t, 1);
         if (!silent(opt_alaw, t) && a->phase != ANS_V8BIS) break;
     }
-    ans = recorded_answer(&r, opt_alaw);
+    ans = opt_tone >= 0 ? opt_tone : recorded_answer(&r, opt_alaw);
     if (ans < 0) { fprintf(stderr, "no answer tone in the recording\n"); return 1; }
     printf("answer tone at %.3f s in the recording; the modem starts %.3f s before it\n", ans / 8000.0, k0 / 8000.0);
 
