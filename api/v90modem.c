@@ -358,6 +358,17 @@ void v90m_get_stats(const v90m_t *m, v90m_stats *st)
         else st->echo_delay = -1;
         st->retrains = (unsigned)a->retrains;
     }
+    st->ec_in_db10 = st->ec_res_db10 = -1;
+    st->ec_near_delay = st->ec_near_peak = st->ec_near_loss_db10 = -1;
+    st->ec_far_delay = st->ec_far_peak = st->ec_far_loss_db10 = -1;
+    if (!ORIGINATING(m)) {
+        v34dx_echo_t e;
+        if (answer_v34_echo(&m->u.a, &e) == 0) {
+            st->ec_in_db10 = e.in_db10; st->ec_res_db10 = e.res_db10;
+            st->ec_near_delay = e.near_delay; st->ec_near_peak = e.near_peak; st->ec_near_loss_db10 = e.near_loss_db10;
+            st->ec_far_delay = e.far_delay; st->ec_far_peak = e.far_peak; st->ec_far_loss_db10 = e.far_loss_db10;
+        }
+    }
 }
 
 answer_t *v90m__answer(v90m_t *m) { return &m->u.a; }

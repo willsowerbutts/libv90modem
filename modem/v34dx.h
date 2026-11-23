@@ -176,4 +176,15 @@ int     v34dx_cleardown(v34dx_t *p);
 /* From Phase 4 on: give up and ask for a retrain; the state goes to DX_RETRAIN. */
 int     v34dx_retrain(v34dx_t *p);
 
+/* The echo cancellers now. Delays are where a canceller's EC_NTAP window
+ * starts, samples after we sent; a peak is ec_peak() within it. */
+typedef struct {
+    int in_db10, res_db10;      /* received power into them, and left after them:
+                                   0.1 dB below 32767 squared */
+    int near_delay, near_peak, near_loss_db10;  /* loss: of the echo path as modelled,
+                                                   0.1 dB; -1 while the model is empty */
+    int far_delay, far_peak, far_loss_db10;     /* all -1 when there is no far canceller */
+} v34dx_echo_t;
+void    v34dx_echo(const v34dx_t *p, v34dx_echo_t *e);
+
 #endif

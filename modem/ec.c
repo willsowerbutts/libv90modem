@@ -51,3 +51,22 @@ void ec_adapt(ec_t *e, int32_t err, int mu_shift)
         for (i = 0; i < EC_NTAP; i++) e->h[i] += (int32_t)((g * x[i] + ((int64_t)1 << (15 + mu_shift))) >> (16 + mu_shift));
     }
 }
+
+int ec_peak(const ec_t *e)
+{
+    int32_t best = 0;
+    int i, at = -1;
+    for (i = 0; i < EC_NTAP; i++) {
+        int32_t v = e->h[i] < 0 ? -e->h[i] : e->h[i];
+        if (v > best) { best = v; at = i; }
+    }
+    return at;
+}
+
+int64_t ec_norm(const ec_t *e)
+{
+    int64_t n = 0;
+    int i;
+    for (i = 0; i < EC_NTAP; i++) n += (int64_t)e->h[i] * e->h[i];
+    return n;
+}

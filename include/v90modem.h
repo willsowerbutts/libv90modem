@@ -325,6 +325,17 @@ typedef struct {
     unsigned   retrains;        /* begun, this call */
     unsigned   renegotiations;  /* rate renegotiations that stopped the data, this call
                                    (answering: V.90, V.92; calling: V.32bis, V.34, V.90, V.92) */
+    /* (appended) answering V.34, in data mode or a rate renegotiation: the echo
+     * cancellers; all -1 otherwise. Each covers a 12 ms window of what we sent:
+     * a delay is where its window starts and a peak the strongest tap in it,
+     * samples; a loss is the echo path's as modelled, 0.1 dB (-1 while empty).
+     * "far" cancels the echo a round trip later (-1 when not in use). An echo
+     * whose delay moves out of its window is no longer cancelled: its model
+     * fades (the loss rises) and the SNR falls. */
+    int        ec_in_db10, ec_res_db10;    /* received power into the cancellers and left after
+                                              them, 0.1 dB below full scale (32767 squared) */
+    int        ec_near_delay, ec_near_peak, ec_near_loss_db10;
+    int        ec_far_delay, ec_far_peak, ec_far_loss_db10;
 } v90m_stats;
 void     v90m_get_stats(const v90m_t *m, v90m_stats *st);
 

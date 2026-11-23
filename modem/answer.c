@@ -742,6 +742,13 @@ int answer_rtd(const answer_t *a)
     }
 }
 
+int answer_v34_echo(const answer_t *a, v34dx_echo_t *e)
+{
+    if (a->phase != ANS_V34 || (a->v34.state != V34A_DATA && a->v34.state != V34A_RENEG)) return -1;
+    v34dx_echo(&a->v34.dx, e);
+    return 0;
+}
+
 int answer_cleardown(answer_t *a)
 {
     if (a->phase == ANS_V34) return v34ans_cleardown(&a->v34);

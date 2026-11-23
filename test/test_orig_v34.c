@@ -172,6 +172,12 @@ int main(void)
     /* ---- rate renegotiation (11.6) begun by each side ---- */
     if (call_up("good line, renegotiations", &good, 0, 0, 28800)) {
         int was_tx = O.bitrate;
+        v34dx_echo_t e;
+        CHECK_EQ_I(answer_v34_echo(&A, &e), 0);
+        printf("  answerer's echo cancellers: %.1f dB in, %.1f dB left; near at %d+%d loss %.1f dB, far at %d+%d loss %.1f dB\n",
+               -e.in_db10 / 10.0, -e.res_db10 / 10.0, e.near_delay, e.near_peak, e.near_loss_db10 / 10.0,
+               e.far_delay, e.far_peak, e.far_loss_db10 / 10.0);
+        CHECK(e.res_db10 > e.in_db10); CHECK(e.near_peak >= 0); CHECK(e.near_loss_db10 > 0);
         CHECK_EQ_I(orig_renegotiate(&O, 16800), 0);         /* we take no more than 16800 */
         run(80);
         CHECK_EQ_I(orig_moving(&O), 0); CHECK_EQ_I(orig_retraining(&O), 0); CHECK_EQ_I(O.connected, 1);
