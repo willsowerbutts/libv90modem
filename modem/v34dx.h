@@ -129,12 +129,17 @@ typedef struct {
     v34_params_t tpar; v34_tx_t vtx; int32_t tx_dg;
     uint32_t    tx_count[DXS_N];    /* symbols sent of each signal so far */
     int32_t     tx_first[DXS_N];    /* sample clock at the first / at the latest start */
+    int         far_search;         /* Phase 2's round trip is past the near search's reach:
+                                       Phase 3 also searches for the far echo near it */
     /* ---- echo ---- */
     ec_t        ec, fec;            /* near; far (round trip later), when far_on */
     int         ec_mu, far_on;
     ecdly_t     ecd;                /* what we sent; ecd.delay is our own path's delay in use */
     int32_t     trn_t;              /* samples of Phase 3 TRN sent */
     int32_t     pw_in, pw_res;      /* smoothed power into and out of the cancellers */
+    int         far_back;           /* the far canceller's window starts this many samples
+                                       before the near one's (during the far search: the near
+                                       delay, kept while the search uses ecd.delay) */
     /* ---- receive ---- */
     sdet_t      sdet;
     qamrx_t     rx;

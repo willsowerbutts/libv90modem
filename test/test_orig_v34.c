@@ -309,6 +309,27 @@ int main(void)
             data_ok(3);
             report("after the retrain");
         }
+        /* the path moves again between the retrain's Phase 2, which measures
+         * the round trip, and its Phase 3, which trains the cancellers (a
+         * burst of late packets, as a real ATA gave): Phase 3 searches for
+         * the far echo near that round trip and finds where it is now */
+        if (call_up("far echo, the path moves twice", &lc, 0, 0, 24000)) {
+            int rx0 = A.rx_bitrate, echo_at;
+            v34dx_echo_t e;
+            L.c.d_ac += 160;
+            for (t = 0; t < 8000L * 15 && A.v34.state != V34A_TRAINING; t += 8) run(8);
+            CHECK_EQ_I(A.v34.state, V34A_TRAINING);
+            L.c.d_ac += 160;
+            CHECK_EQ_I(to_data(30000), 1);
+            CHECK_EQ_I(answer_v34_echo(&A, &e), 0);
+            echo_at = L.c.d_ac + L.c.d_ca + L.c.far_lag + 1;        /* line34's far echo, its larger tap */
+            printf("  path 20 ms longer twice, the second after Phase 2: answerer %d retrains, far canceller at %d+%d for an echo at %d; receives %d bit/s (was %d)\n",
+                   A.retrains, e.far_delay, e.far_peak, echo_at, A.rx_bitrate, rx0);
+            CHECK(e.far_delay + e.far_peak >= echo_at - 4 && e.far_delay + e.far_peak <= echo_at + 4);
+            CHECK(A.rx_bitrate >= rx0 - 2400);
+            data_ok(3);
+            report("after the retrain");
+        }
         retrain_on_step = 0;
         lc = good; lc.loop = LOOP_LONG; lc.nloop = 3;
         if (call_up("long loop (13 dB down at 3 kHz)", &lc, 0, 0, 9600)) {

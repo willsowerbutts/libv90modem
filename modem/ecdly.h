@@ -57,6 +57,13 @@ void ecdly_init(ecdly_t *d, int delay);
  * ECDLY_MAXLAG). Moves the search to end ECDLY_MAXLAG / 5 past rtd; a
  * shorter rtd leaves it at 0 .. ECDLY_MAXLAG. */
 void ecdly_near(ecdly_t *d, int rtd);
+/* where that search starts: the measurement needs what was sent from this
+ * many samples before its first sample on (with ECDLY_SAMPLES after) */
+int  ecdly_near_base(int rtd);
+
+/* A second measurement on the same history (v34dx: the far echo after the
+ * near one): the search starts afresh; delay, base and what was sent stay. */
+void ecdly_restart(ecdly_t *d);
 
 /* One sample period, in this order: ecdly_put() with what is being sent
  * now; ecdly_ref() for the canceller (what was sent `delay` + back samples

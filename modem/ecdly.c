@@ -8,10 +8,18 @@ void ecdly_init(ecdly_t *d, int delay)
     d->delay = delay > 0 ? delay : 0;
 }
 
-void ecdly_near(ecdly_t *d, int rtd)
+int ecdly_near_base(int rtd)
 {
     int b = rtd + ECDLY_MAXLAG / 5 - ECDLY_MAXLAG;
-    d->base = b < 0 ? 0 : b > ECDLY_MAXBASE ? ECDLY_MAXBASE : b;
+    return b < 0 ? 0 : b > ECDLY_MAXBASE ? ECDLY_MAXBASE : b;
+}
+
+void ecdly_near(ecdly_t *d, int rtd) { d->base = ecdly_near_base(rtd); }
+
+void ecdly_restart(ecdly_t *d)
+{
+    memset(d->win, 0, sizeof d->win);
+    d->last = 0; d->n = 0; d->s_pos = 0; d->s_lag = 0; d->best = 0; d->best_lag = 0;
 }
 
 static int search(ecdly_t *d)
