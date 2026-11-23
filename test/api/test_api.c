@@ -699,6 +699,11 @@ static void test_originate(void)
                sc.end, sa.end, cl.n_ev, cl.n_ev > 0 && cl.n_ev <= 8 ? cl.ev[cl.n_ev - 1] : -1);
         CHECK_EQ_I(sc.end, V90M_END_CLEARDOWN_OURS); CHECK_EQ_I(sc.connected, 0);
         CHECK_EQ_I(sa.end, V90M_END_CLEARDOWN_FAR);
+        {   /* the caller's cleardown first stopped the data like a renegotiation */
+            v90m_stats st;
+            v90m_get_stats(an.m, &st);
+            CHECK_EQ_I(st.retrains, 1); CHECK_EQ_I(st.renegotiations, 0); CHECK_EQ_I(st.ec_in_db10, -1);
+        }
         CHECK(cl.n_ev <= 8 && cl.ev[cl.n_ev - 1] == V90M_EV_ENDED);
         CHECK(an.n_ev <= 8 && an.ev[an.n_ev - 1] == V90M_EV_ENDED);
         CHECK_EQ_I(v90m_cleardown(cl.m), V90M_ESTATE);

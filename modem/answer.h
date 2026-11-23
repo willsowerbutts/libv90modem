@@ -233,7 +233,7 @@ int     answer_v34_echo(const answer_t *a, v34dx_echo_t *e);
 /* V.92, V.90 or V.34 data mode: start a retrain. Returns 0, or -1. */
 int     answer_retrain(answer_t *a);
 /* 1 while the modem carries user data in both directions: connected, not
- * retraining, and (V.90, V.92) not inside a rate renegotiation. */
+ * retraining, and (V.90, V.92, V.34) not inside a rate renegotiation. */
 int     answer_moving(const answer_t *a);
 /* 1 when both modems indicated V.92 in Phase 2 (V.92 9.3) and LAPM in V.8:
  * the caller then skips the ODP / ADP exchange of V.42 (9.3.1/V.92). */

@@ -189,6 +189,7 @@ int main(void)
         CHECK_EQ_I(v34ans_renegotiate(&A.v34, 14400), 0);  /* the answerer takes no more than 14400 */
         for (t = 0; t < 400 && orig_moving(&O); t += 10) run(80);
         CHECK_EQ_I(orig_moving(&O), 0); CHECK_EQ_I(orig_retraining(&O), 0);
+        CHECK_EQ_I(answer_moving(&A), 0); CHECK_EQ_I(A.retraining, 0);   /* not a retrain */
         CHECK_EQ_I(to_data(4000), 1);
         CHECK_EQ_I(O.bitrate, 14400); CHECK_EQ_I(A.rx_bitrate, 14400);
         CHECK_EQ_I(O.v34.dx.n_reneg, 2); CHECK_EQ_I(orig_retrains(&O), 0);

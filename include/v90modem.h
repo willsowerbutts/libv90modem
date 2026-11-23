@@ -323,8 +323,9 @@ typedef struct {
     int        echo_delay;      /* answering V.90 / V.92: in use (configured or measured),
                                    samples; -1 = none, and always -1 calling */
     unsigned   retrains;        /* begun, this call */
-    unsigned   renegotiations;  /* rate renegotiations that stopped the data, this call
-                                   (answering: V.90, V.92; calling: V.32bis, V.34, V.90, V.92) */
+    unsigned   renegotiations;  /* rate renegotiations that stopped the data, counted when
+                                   data moves again (so not a cleardown), this call
+                                   (answering: V.34, V.90, V.92; calling: V.32bis, V.34, V.90, V.92) */
     /* (appended) answering V.34, in data mode or a rate renegotiation: the echo
      * cancellers; all -1 otherwise. Each covers a 12 ms window of what we sent:
      * a delay is where its window starts and a peak the strongest tap in it,

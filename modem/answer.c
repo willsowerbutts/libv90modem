@@ -565,7 +565,8 @@ int16_t answer_tick(answer_t *a, int16_t rx)
             a->bitrate = v34ans_tx_rate(&a->v34); a->rx_bitrate = v34ans_rx_rate(&a->v34);
             a->retraining = 0;
         } else if (a->connected) {
-            a->retraining = 1;              /* renegotiation or retrain: no data moves */
+            /* no data moves in either, but only a retrain is a retrain */
+            a->retraining = a->v34.state != V34A_RENEG;
         }
         if (!a->v34.from_v90) a->retrains = a->v34.retrains;
         break;
@@ -776,6 +777,7 @@ int answer_moving(const answer_t *a)
     if (a->phase == ANS_V92) return a->u.v92.tx_ready && a->u.v92.rx_ready;
     if (a->phase == ANS_X2) return a->u.x2.state == X2D_DATA;
     if (a->phase == ANS_K56) return a->u.k56.state == K56D_DATA;
+    if (a->phase == ANS_V34) return a->v34.state == V34A_DATA;
     return 1;
 }
 
