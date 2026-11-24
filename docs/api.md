@@ -211,6 +211,9 @@ stay as they were.
 | `echo_delay` | answering V.90 / V.92 / x2 / K56flex: in use (configured or measured) by the engine running now, during a retrain or after the end the call's; samples; -1 = none, and always -1 calling |
 | `retrains` | begun, this call |
 | `renegotiations` | rate renegotiations that stopped the data, this call: counted when data moves again, when it becomes a retrain, or when the call ends in it; a cleardown's stop, ours or the far end's, is not one (answering: V.34, V.90, V.92, x2, K56flex; calling: V.32bis, V.34, V.90, V.92) |
+| `ec_in_db10`, `ec_res_db10` | (appended, as the next two rows) answering V.34, in data mode or a rate renegotiation: received power into the echo cancellers and left after them, 0.1 dB below full scale; -1 otherwise |
+| `ec_near_delay`, `ec_near_peak`, `ec_near_loss_db10` | likewise: where the near canceller's 12 ms window starts and the strongest tap in it, samples; the echo path's loss as modelled, 0.1 dB (-1 while empty) |
+| `ec_far_delay`, `ec_far_peak`, `ec_far_loss_db10` | likewise, the canceller of the echo a round trip later; -1 when not in use. An echo that moves out of its window is no longer cancelled |
 
 ## Control calls
 

@@ -706,6 +706,12 @@ static void test_originate(void)
                 CHECK(strcmp(got_a, "from the caller") == 0);
                 CHECK(st.snr_db10 > 300); CHECK(st.rtd >= 0 && st.rtd < 40); CHECK_EQ_I(st.retrains, 0);
                 CHECK_EQ_I(cl.ev[0], V90M_EV_CONNECTED);
+                CHECK_EQ_I(st.ec_in_db10, -1); CHECK_EQ_I(st.ec_far_peak, -1);   /* answering only */
+                v90m_get_stats(an.m, &st);
+                printf("  V.34 answerer's echo cancellers: %.1f dB in, %.1f dB left; near at %d+%d, far at %d+%d\n",
+                       -st.ec_in_db10 / 10.0, -st.ec_res_db10 / 10.0, st.ec_near_delay, st.ec_near_peak,
+                       st.ec_far_delay, st.ec_far_peak);
+                CHECK(st.ec_in_db10 > 0); CHECK(st.ec_res_db10 >= st.ec_in_db10); CHECK(st.ec_near_delay >= 0);
                 CHECK_EQ_I(v90m_retrain(cl.m), V90M_OK);            /* 11.5.1.1 */
                 nc = na = 0;
             }
@@ -751,6 +757,7 @@ static void test_originate(void)
         { v90m_stats e1, e2; v90m_get_stats(cl.m, &e1); v90m_get_stats(an.m, &e2);
           CHECK_EQ_I(e1.renegotiations, 0); CHECK_EQ_I(e2.renegotiations, 0);
           CHECK(abs(e1.snr_db10 - g1.snr_db10) <= 60); CHECK(abs(e2.snr_db10 - g2.snr_db10) <= 60);
+          CHECK_EQ_I(e2.ec_in_db10, -1);
           CHECK(abs(e1.rtd - g1.rtd) <= 2); CHECK(abs(e2.rtd - g2.rtd) <= 2);
           printf("  kept after the end: caller SNR %d rtd %d (in data %d, %d); answerer SNR %d rtd %d (%d, %d)\n",
                  e1.snr_db10, e1.rtd, g1.snr_db10, g1.rtd, e2.snr_db10, e2.rtd, g2.snr_db10, g2.rtd); }

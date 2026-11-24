@@ -1,4 +1,4 @@
   ec: ERLE after 2040 samples of two-level training 62.9 dB
   ec: frozen, residual echo 56.9 dB below the far signal
   ec: after a 15 % path change, slow adaptation: residual 24.6 dB below the far signal
-ec: 513 checks, 0 failures
+ec: 519 checks, 0 failures

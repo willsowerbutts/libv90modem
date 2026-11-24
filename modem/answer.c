@@ -265,6 +265,13 @@ int answer_rtd(const answer_t *a)
     return m && m->rtd ? m->rtd(a) : -1;
 }
 
+int answer_v34_echo(const answer_t *a, v34dx_echo_t *e)
+{
+    if (a->phase != ANS_V34 || (a->v34.state != V34A_DATA && a->v34.state != V34A_RENEG)) return -1;
+    v34dx_echo(&a->v34.dx, e);
+    return 0;
+}
+
 int answer_cleardown(answer_t *a) { return a->s->cleardown ? a->s->cleardown(a) : -1; }
 
 int answer_retrain(answer_t *a) { return a->s->retrain ? a->s->retrain(a) : -1; }

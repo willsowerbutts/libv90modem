@@ -102,7 +102,9 @@ running now; during a retrain or after the end, that of the modulation of
 the call), and the counts of retrains and of rate renegotiations that
 stopped the data (V.34, V.90, V.92, x2, K56flex), each counted when data
 moves again, when it becomes a retrain, or when the call ends in it; the
-stop of a cleardown, ours or the far end's, does not count.
+stop of a cleardown, ours or the far end's, does not count. In V.34 it
+also gives the echo cancellers (`ec_*`): where they look, the loss of the
+echo they found, and the power before and after them.
 
 ## x2
 

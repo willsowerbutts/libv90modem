@@ -247,6 +247,9 @@ int     answer_snr_db10(const answer_t *a);
 /* Round-trip delay of the connection as the handshake measured it, in
  * samples; -1 where the modulation does not measure one. */
 int     answer_rtd(const answer_t *a);
+/* V.34 data mode or a rate renegotiation: the echo cancellers (v34dx_echo).
+ * Returns 0, or -1 otherwise. */
+int     answer_v34_echo(const answer_t *a, v34dx_echo_t *e);
 /* V.92, V.90 or V.34 data mode: start a retrain. Returns 0, or -1. */
 int     answer_retrain(answer_t *a);
 /* 1 while the modem carries user data in both directions: connected, not

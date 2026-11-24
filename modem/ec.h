@@ -25,5 +25,11 @@ int16_t ec_tick(ec_t *e, int16_t tx, int16_t rx, int mu_shift);
  * error computed elsewhere: for two cancellers in a row (near and far echo),
  * which must both learn from what is left after both. */
 void    ec_adapt(ec_t *e, int32_t err, int mu_shift);
+/* The strongest tap, 0..EC_NTAP-1: where in the window the echo sits; -1 while
+ * the model is empty. */
+int     ec_peak(const ec_t *e);
+/* Sum of the squared taps, Q42: the echo path's gain squared, as modelled (the
+ * squares of EC_NTAP saturated taps would not fit in Q48). */
+int64_t ec_norm(const ec_t *e);
 
 #endif

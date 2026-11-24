@@ -3,6 +3,7 @@
   V.32bis: caller 1 V.32bis 14400/14400 bit/s (V.8 1), answerer 1 V.32bis; SNR 52.2 dB, round trip 3 samples; caller got "from the answerer", answerer got "from the caller"
   V.32bis retrain asked for by the caller: stopped 1, moving again 1, retrains 1; answerer got "again"
   V.34: caller 1 V.34 28800/28800 bit/s (V.8 1), answerer 1 V.34 28800/28800; SNR 37.3 dB, round trip 3 samples; caller got "from the answerer", answerer got "from the caller"
+  V.34 answerer's echo cancellers: -20.7 dB in, -20.7 dB left; near at 0+-1, far at -1+-1
   V.34 retrain asked for by the caller: stopped 1, moving again 1, retrains 1; answerer got "again"
   V.34 cleardown by the caller: caller end 4, answerer end 3; caller events 6 (last 5)
   kept after the end: caller SNR 391 rtd 2 (in data 373, 3); answerer SNR 386 rtd 2 (381, 2)
@@ -56,4 +57,4 @@
   tx_level 16384 (the caller 16384), V.90 A-law back to back: data mode (56000 / 21600 bit/s)
   tx_level 16384, V.22 (a caller without 2400): V.22 1200 bit/s
   tx_level 16384 both, V.90 back to back: data mode, answerer end 0
-api: 953 checks, 0 failures
+api: 959 checks, 0 failures

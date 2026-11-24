@@ -688,3 +688,26 @@ int v34dx_retrain(v34dx_t *p)
     retrain(p, 1);
     return 0;
 }
+
+static int loss_db10(const ec_t *c)
+{
+    int64_t n = ec_norm(c);
+    return n > 0 ? probe_db10((int64_t)1 << 42, n) : -1;
+}
+
+void v34dx_echo(const v34dx_t *p, v34dx_echo_t *e)
+{
+    const int64_t fs = (int64_t)32767 * 32767;
+    e->in_db10 = probe_db10(fs, p->pw_in > 0 ? p->pw_in : 1);
+    e->res_db10 = probe_db10(fs, p->pw_res > 0 ? p->pw_res : 1);
+    e->near_delay = p->ecd.delay;
+    e->near_peak = ec_peak(&p->ec);
+    e->near_loss_db10 = loss_db10(&p->ec);
+    if (p->far_on) {
+        e->far_delay = p->ecd.delay + p->cfg.rtd - FAR_LEAD;
+        e->far_peak = ec_peak(&p->fec);
+        e->far_loss_db10 = loss_db10(&p->fec);
+    } else {
+        e->far_delay = e->far_peak = e->far_loss_db10 = -1;
+    }
+}

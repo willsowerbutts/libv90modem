@@ -8,6 +8,11 @@ change is listed here. Rebuild against the new header with every version;
 "Simulation and own answerer only" means: tried against simulated lines and
 this library's own answering modem, never against a real modem or server.
 
+## Unreleased
+
+Added (answering role):
+- `v90m_stats.ec_*` (appended): V.34's echo cancellers, in data mode.
+
 ## 0.6.0 (2026-11-24)
 
 Security (V.92, calling role; no 0.5.x patch: upgrade to 0.6.0):

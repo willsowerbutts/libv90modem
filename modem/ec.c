@@ -84,3 +84,22 @@ void ec_adapt(ec_t *e, int32_t err, int mu_shift)
     const int16_t *x = &e->x[e->pos];
     if (mu_shift >= 0 && e->energy > 65536) update(e, x, err, mu_shift);
 }
+
+int ec_peak(const ec_t *e)
+{
+    int64_t best = 0;
+    int i, at = -1;
+    for (i = 0; i < EC_NTAP; i++) {
+        int64_t v = e->h[i] < 0 ? -(int64_t)e->h[i] : e->h[i];
+        if (v > best) { best = v; at = i; }
+    }
+    return at;
+}
+
+int64_t ec_norm(const ec_t *e)
+{
+    int64_t n = 0;
+    int i;
+    for (i = 0; i < EC_NTAP; i++) n += (int64_t)e->h[i] * e->h[i] >> 6;
+    return n;
+}

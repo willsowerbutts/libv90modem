@@ -124,6 +124,17 @@ int main(void)
         }
     }
 
+    /* ec_peak and ec_norm (what the API reports of the model): an empty
+     * model, one tap, and every tap saturated, where Q48 squares would
+     * overflow (UBSan) */
+    ec_init(&ec);
+    CHECK_EQ_I(ec_peak(&ec), -1); CHECK(ec_norm(&ec) == 0);
+    ec.h[7] = -(1 << 23); ec.h[9] = 1 << 22;
+    CHECK_EQ_I(ec_peak(&ec), 7); CHECK(ec_norm(&ec) == ((int64_t)5 << 38));
+    for (i = 0; i < EC_NTAP; i++) ec.h[i] = INT32_MAX;
+    ec.h[40] = INT32_MIN;
+    CHECK_EQ_I(ec_peak(&ec), 40); CHECK(ec_norm(&ec) > (int64_t)95 << 55);
+
     /* silence in, silence out, no blow-up when the transmit history is empty */
     ec_init(&ec);
     for (i = 0; i < 500; i++) CHECK_EQ_I(ec_tick(&ec, 0, 0, 2) == 0, 1);

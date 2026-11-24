@@ -4,6 +4,7 @@
   realistic line, again              3200 sym/s  C->A 21600 bit/s   86400 bits 0 err  A->C 24000 bit/s   96000 bits 0 err  SNR 31.7 dB, rtd 404
   retrain begun by the answerer: data again 5.7 s later;  after the answerer's retrain       3200 sym/s  C->A 24000 bit/s   95940 bits 0 err  A->C 24000 bit/s   96000 bits 0 err  SNR 31.1 dB, rtd 404
   good line, renegotiations          3200 sym/s  C->A 31200 bit/s  124800 bits 0 err  A->C 28800 bit/s  115200 bits 0 err  SNR 37.7 dB, rtd 371
+  answerer's echo cancellers: -25.7 dB in, -26.7 dB left; near at 0+1 loss 12.0 dB, far at 355+21 loss 56.0 dB
   after our renegotiation (16800 in) 3200 sym/s  C->A 31200 bit/s   93600 bits 0 err  A->C 16800 bit/s   50400 bits 0 err  SNR 38.1 dB, rtd 371
   after the answerer's (14400 out)   3200 sym/s  C->A 14400 bit/s   43200 bits 0 err  A->C 16800 bit/s   50400 bits 0 err  SNR 37.7 dB, rtd 371
   our cleardown: over in 260 ms; answerer cleared 1
@@ -30,4 +31,4 @@
   noise 22 dB down                   3200 sym/s  C->A 12000 bit/s   48000 bits 0 err  A->C 12000 bit/s   48000 bits 0 err  SNR 20.8 dB, rtd 371
   far echo 3 %, 40 ms late           3200 sym/s  C->A 16800 bit/s   67200 bits 0 err  A->C 28800 bit/s  115200 bits 0 err  SNR 38.1 dB, rtd 371
   long loop (13 dB down at 3 kHz)    3200 sym/s  C->A 12000 bit/s   48000 bits 0 err  A->C 24000 bit/s   96000 bits 0 err  SNR 33.3 dB, rtd 373
-orig_v34: 547 checks, 0 failures
+orig_v34: 551 checks, 0 failures
