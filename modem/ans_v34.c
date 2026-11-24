@@ -15,6 +15,7 @@ void ans_v34_cfg(const answer_t *a, v34ans_cfg *c)
     c->getbit = a->cfg.getbit; c->putbit = a->cfg.putbit; c->user = a->cfg.user;
     c->x2 = v8ans_x2(&a->v8);
     c->k56 = a->k56_agreed;
+    c->retrain_on_step = a->cfg.retrain_on_step;
 }
 
 /* V.8 selected V.34 as the data mode: INFO0a starts right after the 75 ms

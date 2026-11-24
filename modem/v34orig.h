@@ -26,6 +26,7 @@ typedef struct {
     v34dx_getbit_fn getbit; /* data to send */
     v34dx_putbit_fn putbit; /* data received */
     void *user;
+    int retrain_on_step;    /* v34dx_cfg.retrain_on_step */
 } v34orig_cfg;
 
 typedef enum {

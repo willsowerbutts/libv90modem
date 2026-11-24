@@ -10,6 +10,13 @@ this library's own answering modem, never against a real modem or server.
 
 ## Unreleased
 
+Added (both roles):
+- `v90m_cfg.retrain_on_step`, default 0: V.34 retrains, rather than
+  renegotiates down, when what it receives falls in a step, as when a VoIP
+  jitter buffer moves our echo out of the cancellers' reach, and when a
+  rate renegotiation's training fails. `v90m-replay -R` sets it. With it
+  off, nothing changes.
+
 Added (answering role):
 - `v90m_stats.ec_*` (appended): V.34's echo cancellers, in data mode.
 

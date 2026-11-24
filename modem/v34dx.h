@@ -63,6 +63,12 @@ typedef struct {
     int ask_shaping;        /* MP bit 32 */
     int16_t ask_h[3][2];    /* precoder coefficients, 2.14; non-zero = MP Type 1 */
     int reneg_type0;        /* send the MP of a rate renegotiation as Type 0 (coefficients not repeated) */
+    int retrain_on_step;    /* when what we receive falls in a step (Q_STEP_DB10 below what
+                               it was in the second or so before), retrain rather than
+                               renegotiate down: only a retrain trains
+                               the echo cancellers again, which do not adapt in data mode.
+                               Also retrain when B1 of a renegotiation fails, rather than
+                               end the call */
     v34dx_getbit_fn getbit; /* data to send */
     v34dx_putbit_fn putbit; /* data received */
     void *user;
@@ -162,6 +168,9 @@ typedef struct {
                                        the first bit of that stretch of data */
     /* the far modem's retrain tone, 10 ms blocks */
     tonedet_t   tone;               /* the far modem's retrain tone */
+    int32_t     mse_ref;            /* up.rx.mse lately, Q12, followed while within up.mse_limit
+                                       (a time constant of 4096 symbols): what rate_down
+                                       measures a fall from */
     int         rate_drops;
 } v34dx_t;
 

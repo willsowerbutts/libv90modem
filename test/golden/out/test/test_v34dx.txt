@@ -41,9 +41,11 @@
     C->A words before 1950, after 3986, lost 6, again 0; breaks 1 (78 bits missing, the mapping frame 78)
   renegotiation with a Type 0 MP: precoder kept 3200 sym/s  A->C 31200 bit/s   93600 bits 0 errors   C->A 31200 bit/s   93600 bits 0 errors
   noise rises to -27 dB in data mode: 1 renegotiation(s) of our own;                                     3200 sym/s  A->C 31200 bit/s  124800 bits 0 errors   C->A 16800 bit/s   67200 bits 0 errors
+  retrain_on_step, noise steps up to -27 dB in data mode: we retrain
+  retrain_on_step, noise rises to -27 dB over 30 s: 1 renegotiation(s) of our own;                                     3200 sym/s  A->C 31200 bit/s  124800 bits 0 errors   C->A 19200 bit/s   76800 bits 0 errors
   answerer's cleardown, the far tone during it: state 11, error 7 after 228 ms
   caller's cleardown, the far tone during it: state 11, error 7 after 230 ms
   Tone B in data mode: retrain after 61 ms
   caller's signal lost in data mode: carrier lost after 522 ms
   as call modem after V.90 Phase 2   3200 sym/s  A->C 31200 bit/s   93600 bits 0 errors   C->A 28800 bit/s   86400 bits 0 errors
-v34dx: 790 checks, 0 failures
+v34dx: 811 checks, 0 failures

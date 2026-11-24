@@ -31,6 +31,7 @@ typedef struct {
     int x2;                 /* offer x2 in Phase 2 (p2ans_cfg.x2): V.8 made our JM x2's */
     int k56;                /* K56flex was agreed in V.8bis (answer_t.k56_agreed): Phase 2
                                (p2ans_cfg.k56) may flag INFO1a, first and in a retrain */
+    int retrain_on_step;    /* v34dx_cfg.retrain_on_step */
 } v34ans_cfg;
 
 typedef enum {

@@ -24,7 +24,7 @@ static int cleared_of(const answer_t *a)
 }
 
 static answer_t A; static orig_t O; static line34_t L; static bend_t UA, UO;
-static int a_mute;
+static int a_mute, retrain_on_step;
 
 static int16_t a_tick(void *u, int16_t rx) { int16_t y = answer_tick((answer_t *)u, rx); return a_mute ? 0 : y; }
 static int16_t o_tick(void *u, int16_t rx) { return orig_tick((orig_t *)u, rx); }
@@ -37,11 +37,13 @@ static void start(const line34_cfg *lc, int max_tx, int max_rx, int echo_delay)
     bend_init(&UA, &A.v34.dx, 0xACE1, 0xBEEF1); bend_init(&UO, &O.e.v34.dx, 0xBEEF1, 0xACE1);
     memset(&ac, 0, sizeof ac);
     ac.level = 3000; ac.modes = MODES; ac.getbit = bend_get; ac.putbit = bend_put; ac.user = &UA;
+    ac.retrain_on_step = retrain_on_step;
     answer_init(&A, &ac);
     answer_v90_line(&A, lc->io_delay, 0, 0);
     memset(&oc, 0, sizeof oc);
     oc.level = 3000; oc.modes = MODES; oc.getbit = bend_get; oc.putbit = bend_put; oc.user = &UO;
     oc.max_tx_bps = max_tx; oc.max_rx_bps = max_rx; oc.echo_delay = echo_delay;
+    oc.retrain_on_step = retrain_on_step;
     orig_init(&O, &oc);
     line34_init(&L, lc);
     a_mute = 0;
@@ -179,6 +181,7 @@ int main(void)
     if (call_up("good line, renegotiations", &good, 0, 0, 28800)) {
         int was_tx = O.bitrate;
         v34dx_echo_t e;
+        CHECK_EQ_I(A.v34.dx.cfg.retrain_on_step, 0); CHECK_EQ_I(O.e.v34.dx.cfg.retrain_on_step, 0);   /* off by default */
         CHECK_EQ_I(answer_v34_echo(&A, &e), 0);
         printf("  answerer's echo cancellers: %.1f dB in, %.1f dB left; near at %d+%d loss %.1f dB, far at %d+%d loss %.1f dB\n",
                -e.in_db10 / 10.0, -e.res_db10 / 10.0, e.near_delay, e.near_peak, e.near_loss_db10 / 10.0,
@@ -357,6 +360,49 @@ int main(void)
             data_ok(3);
             report("far echo, 290 ms round trip, moved");
         }
+        /* the path towards the caller grows by one 20 ms packet mid-call (a
+         * jitter buffer that took one more), so the echo from the far hybrid
+         * comes 160 samples later than the answerer's far canceller, trained
+         * in Phase 3, looks for it: with retrain_on_step the answerer
+         * retrains, which trains the cancellers again, rather than
+         * renegotiate down, which does not.
+         * The echo about where an ATA puts it (far_lag): inside the far
+         * canceller's window, so that the call starts as fast as the lab's */
+        lc = good; lc.far_a = 0.06; lc.d_ac = 1160; lc.d_ca = 1160; lc.far_lag = 56;
+        retrain_on_step = 1;
+        if (call_up("far echo, 290 ms round trip", &lc, 0, 0, 24000)) {
+            int rx0 = A.rx_bitrate, rtd0 = answer_rtd(&A);
+            CHECK_EQ_I(A.v34.dx.cfg.retrain_on_step, 1); CHECK_EQ_I(O.e.v34.dx.cfg.retrain_on_step, 1);
+            L.c.d_ac += 160;
+            run(8000L * 3);
+            CHECK_EQ_I(to_data(30000), 1);
+            printf("  path 20 ms longer: answerer %d retrains, %d renegotiations, receives %d bit/s (was %d)\n",
+                   A.retrains, A.v34.dx.n_reneg, A.rx_bitrate, rx0);
+            CHECK_EQ_I(A.retrains, 1); CHECK_EQ_I(A.v34.dx.n_reneg, 0);
+            CHECK(A.rx_bitrate >= rx0 - 2400);
+            CHECK(answer_rtd(&A) >= rtd0 + 150 && answer_rtd(&A) <= rtd0 + 170);   /* measured again */
+            data_ok(3);
+            report("after the retrain");
+        }
+        /* the same step, and the caller renegotiates at once, before the
+         * answerer's own detector sees it (as a real one did): the answerer's
+         * B1 fails, its echo uncancelled, and it retrains rather than end
+         * the call */
+        if (call_up("far echo, the caller renegotiates", &lc, 0, 0, 24000)) {
+            int rx0 = A.rx_bitrate;
+            L.c.d_ac += 160;
+            run(2400);
+            CHECK_EQ_I(orig_renegotiate(&O, 0), 0);
+            run(8000L * 3);
+            CHECK_EQ_I(to_data(30000), 1);
+            printf("  path 20 ms longer, the caller renegotiates: answerer %d retrains, phase %d; receives %d bit/s (was %d)\n",
+                   A.retrains, A.phase, A.rx_bitrate, rx0);
+            CHECK_EQ_I(A.retrains, 1);
+            CHECK(A.rx_bitrate >= rx0 - 2400);
+            data_ok(3);
+            report("after the retrain");
+        }
+        retrain_on_step = 0;
         lc = good; lc.loop = LOOP_LONG; lc.nloop = 3;
         if (call_up("long loop (13 dB down at 3 kHz)", &lc, 0, 0, 9600)) {
             CHECK(O.bitrate < good_tx); CHECK(O.rx_bitrate < good_rx);

@@ -397,6 +397,43 @@ int main(void)
         CHECK(P.ua.sink.errs * 100000 <= P.ua.sink.n); CHECK_EQ_I(P.uc.sink.errs, 0);
         printf("  noise rises to -27 dB in data mode: %d renegotiation(s) of our own;", P.a.rate_drops); report("");
     }
+    {
+        /* retrain_on_step: the same step, far past what the rate needs, is
+         * taken for a step in the path, which a renegotiation would not mend
+         * if it were our echo moving. The answer modem retrains (here that
+         * ends the engine: Phase 2 is its owner's) */
+        mkcfg(&a, &c, 4, 1, 0, &CLEAN);
+        a.retrain_on_step = 1;
+        pair_init(&a, &c, &CLEAN);
+        CHECK_EQ_I(pair_to_data(8000), 1); pair_run(8000);
+        CHECK_EQ_I(P.a.rx_rate, 31200);
+        P.line.c.noise_a = 1500.0 / pow(10, 27 / 20.0);
+        pair_run(8000L * 4);
+        CHECK_EQ_I(P.a.state, DX_RETRAIN); CHECK_EQ_I(P.a.retrain_ours, 1);
+        CHECK_EQ_I(P.a.rate_drops, 0); CHECK_EQ_I(P.a.n_reneg, 0);
+        printf("  retrain_on_step, noise steps up to -27 dB in data mode: we retrain\n");
+    }
+    {
+        /* retrain_on_step, but the line grows worse over 30 s: the answer
+         * modem lowers its receive rate as without it */
+        int k;
+        mkcfg(&a, &c, 4, 1, 0, &CLEAN);
+        a.retrain_on_step = 1;
+        pair_init(&a, &c, &CLEAN);
+        CHECK_EQ_I(pair_to_data(8000), 1); pair_run(8000);
+        CHECK_EQ_I(P.a.rx_rate, 31200);
+        for (k = 0; k <= 300; k++) {
+            P.line.c.noise_a = 1500.0 / pow(10, (50 - 23 * k / 300.0) / 20.0);
+            pair_run(800);
+        }
+        CHECK_EQ_I(P.a.state, DX_DATA); CHECK_EQ_I(P.c.state, DX_DATA);
+        CHECK(P.a.rate_drops >= 1); CHECK(P.a.n_reneg >= 1);
+        CHECK(P.a.rx_rate <= 21600 && P.a.rx_rate >= 14400); CHECK_EQ_I(P.a.tx_rate, 31200);
+        sinks_reset(); pair_run(8000L * 4);
+        CHECK_EQ_I(P.a.state, DX_DATA);
+        CHECK(P.ua.sink.errs * 100000 <= P.ua.sink.n); CHECK_EQ_I(P.uc.sink.errs, 0);
+        printf("  retrain_on_step, noise rises to -27 dB over 30 s: %d renegotiation(s) of our own;", P.a.rate_drops); report("");
+    }
 
     /* ---- cleardown (11.7), both ways ---- */
     for (k = 0; k < 2; k++) {

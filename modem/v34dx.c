@@ -32,6 +32,7 @@ int16_t v34dx_trace_tx(int16_t y);
 #define CLEAR_MPS      6        /* MP sequences of a cleardown before we go silent regardless */
 /* is the line still good enough for the rate? (as p34d; v34up.h) */
 #define Q_MARGIN_DB10  30
+#define Q_STEP_DB10    60       /* rate_down, retrain_on_step: fallen this far, retrain */
 
 enum { RX_OFF, RX_WAIT_S, RX_KNOWN, RX_SEQ, RX_HOLD, RX_SRES, RX_DATA };
 
@@ -368,6 +369,7 @@ static void rx_begin_data(v34dx_t *p)
     c.scrambler = (uint8_t)far_poly(p);
     for (k = 0; k < 3; k++) { c.h[k][0] = p->cfg.ask_h[k][0]; c.h[k][1] = p->cfg.ask_h[k][1]; }
     if (v34up_data_begin(&p->up, &c, put_data, p) != 0) { fail(p, DX_ERR_RATE); return; }
+    p->mse_ref = (p->up.rx.mse > 0 ? p->up.rx.mse : 1) << 12;
     p->rxmode = RX_DATA;
     p->rx_starts++;
     p->seq_mp = 0;
@@ -399,9 +401,24 @@ static void start_reneg_tx(v34dx_t *p)
 /* the receiver's error has been above what the rate needs for a second */
 static void rate_down(v34dx_t *p)
 {
-    int32_t snr = probe_db10(65536, p->up.rx.mse > 0 ? p->up.rx.mse : 1) - Q_MARGIN_DB10;
+    int32_t now = probe_db10(65536, p->up.rx.mse > 0 ? p->up.rx.mse : 1);
+    int32_t snr = now - Q_MARGIN_DB10;
     int32_t b10 = (snr - V34UP_SNR0_DB10) * 10 / 30;
     int n = (int)(((int64_t)p->cfg.sym_rate * b10) / 10) / 2400, cur = p->rx_rate / 2400;
+    int32_t was = probe_db10((int64_t)65536 << 12, p->mse_ref > 0 ? p->mse_ref : 1);
+#ifdef P34D_TRACE
+    if (p->cfg.retrain_on_step)
+        printf("          V.34 rate_down: SNR now %d, lately %d, at training %d, rate's limit %d (0.1 dB)\n",
+               (int)now, (int)was, (int)p->snr_db10, probe_db10(65536, p->up.mse_limit));
+#endif
+    /* Fallen in a step, not over seconds: the path changed, as when a
+     * jitter buffer takes one more packet and our echo comes a packet
+     * later. Whether it fell fast tells this apart, not how far: where the
+     * SNR lands after our echo moves depends on the echo, not on the rate. */
+    if (p->cfg.retrain_on_step && was - now >= Q_STEP_DB10) {
+        retrain(p, 1);
+        return;
+    }
     if (n >= cur) n = cur - 1;
     if (n < (p->cfg.sym_rate == 2400 ? 1 : 2)) { retrain(p, 1); return; }
     p->line_n = n;
@@ -418,6 +435,11 @@ static void rate_down(v34dx_t *p)
 static void s_heard(v34dx_t *p)
 {
     if (!v34up_s_flush(&p->up, &p->sdet)) return;
+#ifdef P34D_TRACE
+    if (p->cfg.retrain_on_step && p->state == DX_DATA)
+        printf("          V.34 far end renegotiates: SNR now %d, at training %d, rate's limit %d (0.1 dB)\n",
+               probe_db10(65536, p->up.rx.mse > 0 ? p->up.rx.mse : 1), (int)p->snr_db10, probe_db10(65536, p->up.mse_limit));
+#endif
     reneg_begin(p);
     sres_resume(&p->sres);
     p->rxmode = RX_SRES;
@@ -545,8 +567,15 @@ static void rx_symbol(v34dx_t *p)
         if (!was_ready && p->up.rx_ready)
             printf("          V.34 B1 good: %d errors in %d bits, mse %d\n", (int)p->up.vrx.b1_errors, (int)p->up.vrx.b1_bits, (int)r->mse);
 #endif
+        if (p->up.rx_ready && !p->in_reneg && r->mse <= p->up.mse_limit)
+            p->mse_ref += ((r->mse << 12) - p->mse_ref) >> 12;
         switch (ev) {
-        case V34UP_B1_BAD: fail(p, DX_ERR_B1); break;
+        case V34UP_B1_BAD:
+            /* in a renegotiation (the far end's can come before our
+             * rate_down sees a step): what failed is our training, not the line */
+            if (p->in_reneg && p->cfg.retrain_on_step) retrain(p, 1);
+            else fail(p, DX_ERR_B1);
+            break;
         case V34UP_DEAD:   retrain(p, 1); break;
         case V34UP_SLOW:   rate_down(p); break;
         case V34UP_LOST:   fail(p, DX_ERR_CARRIER); break;

@@ -276,12 +276,13 @@ recorded call into the answering modem and reports what it made of it,
 phase by phase:
 
 ```
-v90m-replay [-a] [-9] [-x] [-k] [-B] [-M] [-F] [-u BPS] [-d BPS] [-l DBM0 | -r RMS] [-e SAMPLES] [-P CODE] [-s SAMPLE] [-b FILE] RECORDING
+v90m-replay [-a] [-R] [-9] [-x] [-k] [-B] [-M] [-F] [-u BPS] [-d BPS] [-l DBM0 | -r RMS] [-e SAMPLES] [-P CODE] [-s SAMPLE] [-b FILE] RECORDING
 ```
 
 | | |
 |---|---|
 | `-a` | A-law line (mu-law otherwise) |
+| `-R` | `retrain_on_step` |
 | `-9` | V.92 offered (PCM upstream up to 48000 bit/s unless `-u`) |
 | `-x` | x2 offered (`V90M_MOD_X2`) |
 | `-k` | K56flex offered (`V90M_MOD_K56`): V.8bis first; the recording is lined up with our answer tone after it |

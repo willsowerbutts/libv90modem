@@ -47,6 +47,7 @@ void v34orig_dx_cfg(const p2call_t *p2, const v34orig_cfg *cfg, int peer_1664, v
     dx->max_rx_rate = cfg->max_rx_rate;
     dx->max_tx_rate = cfg->max_tx_rate;
     dx->getbit = cfg->getbit; dx->putbit = cfg->putbit; dx->user = cfg->user;
+    dx->retrain_on_step = cfg->retrain_on_step;
 }
 
 /* a retrain is due, whoever began it: 70 ms of silence, then Phase 2 again */

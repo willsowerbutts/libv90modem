@@ -137,6 +137,7 @@ typedef struct {
     int           law;       /* V.34 and V.90's upstream: 1 mu-law, 2 A-law when what we send
                                 passes a G.711 codec (only codec values are sent), 0 linear */
     int           v90_table1; /* tests only: V.90 ignores what its DIL measured (Table 1 levels) */
+    int           retrain_on_step; /* V.34: v34dx_cfg.retrain_on_step */
     v22_getbit_fn getbit;
     v22_putbit_fn putbit;
     void         *user;

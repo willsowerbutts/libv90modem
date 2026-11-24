@@ -42,6 +42,7 @@ void v34ans_dx_cfg(const p2ans_t *p2, const v34ans_cfg *cfg, v34dx_cfg *dx)
     dx->echo_delay = cfg->io_delay;
     dx->rtd_has_io = cfg->io_delay < 0;
     dx->md_len = p2->md_len;
+    dx->retrain_on_step = cfg->retrain_on_step;
     /* 11.3.1.2.1: S begins 70 ms after INFO1a ended. p2ans stops 80 samples
      * after that end; the first symbol is on the line one pulse delay after
      * the tick that takes it, and begins half a symbol before its centre. */
@@ -150,6 +151,7 @@ int v34_call_cfg_from_v90(const info1a_t *i, int rx_hi_carrier, int c1664, int r
     dx->echo_delay = cfg->io_delay;
     dx->rtd_has_io = cfg->io_delay < 0;
     dx->peer_1664 = c1664;
+    dx->retrain_on_step = cfg->retrain_on_step;
     dx->max_rx_rate = cfg->max_rx_rate;
     dx->max_tx_rate = cfg->max_tx_rate;
     dx->getbit = cfg->getbit; dx->putbit = cfg->putbit; dx->user = cfg->user;

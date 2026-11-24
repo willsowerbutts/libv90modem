@@ -140,6 +140,7 @@ typedef struct {
     int           max_tx_code; /* INFO0d bits 33:37, the most power the caller may ask our
                                 downstream to have: -0.5 dBm0 less 0.5 dB per step, 1..31;
                                 0 = the default, ANS_MAX_TX_CODE (-12 dBm0) */
+    int           retrain_on_step; /* V.34: v34dx_cfg.retrain_on_step */
 } answer_cfg;
 
 #define ANS_MAX_TX_CODE 23

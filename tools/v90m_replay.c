@@ -2,9 +2,10 @@
  * it made of it, phase by phase. The tool to run on a recording that comes
  * with a bug report (README: "Reporting a bug").
  *
- *   v90m-replay [-a] [-9] [-x] [-k] [-B] [-M] [-F] [-u BPS] [-d BPS] [-l DBM0 | -r RMS] [-e SAMPLES] [-P CODE] [-s SAMPLE] [-b FILE] RECORDING
+ *   v90m-replay [-a] [-R] [-9] [-x] [-k] [-B] [-M] [-F] [-u BPS] [-d BPS] [-l DBM0 | -r RMS] [-e SAMPLES] [-P CODE] [-s SAMPLE] [-b FILE] RECORDING
  *
  *   -a          A-law line (mu-law otherwise)
+ *   -R          retrain_on_step
  *   -9          V.92 offered (PCM upstream up to 48000 bit/s unless -u)
  *   -x          x2 offered
  *   -k          K56flex offered: V.8bis comes first, and what the recording
@@ -231,7 +232,7 @@ static void x2_down(const x2tx_t *t, uint8_t sent)
     }
 }
 
-static int opt_alaw, opt_v92, opt_x2, opt_k56, opt_bell, opt_hund = -1200, opt_up, opt_down = 56000, opt_echo = -1, opt_code;
+static int opt_alaw, opt_step, opt_v92, opt_x2, opt_k56, opt_bell, opt_hund = -1200, opt_up, opt_down = 56000, opt_echo = -1, opt_code;
 static long opt_rms;    /* -r, 0 = from opt_hund */
 
 static void configure(v90m_cfg *c, int lin)
@@ -247,6 +248,7 @@ static void configure(v90m_cfg *c, int lin)
     c->codec_linear_rx = lin;
     c->echo_delay = opt_echo;
     c->max_tx_code = opt_code;
+    c->retrain_on_step = opt_step;
     c->getbit = get;
     c->putbit = put;
 }
@@ -266,6 +268,7 @@ int main(int argc, char **argv)
     for (arg = 1; arg < argc && argv[arg][0] == '-' && argv[arg][1]; arg++) {
         const char *o = argv[arg];
         if (!strcmp(o, "-a")) opt_alaw = 1;
+        else if (!strcmp(o, "-R")) opt_step = 1;
         else if (!strcmp(o, "-9")) opt_v92 = 1;
         else if (!strcmp(o, "-x")) opt_x2 = 1;
         else if (!strcmp(o, "-k")) opt_k56 = 1;
@@ -285,7 +288,7 @@ int main(int argc, char **argv)
         else break;
     }
     if (bad || arg >= argc || !(f = fopen(argv[arg], "rb"))) {
-        fprintf(stderr, "usage: v90m-replay [-a] [-9] [-x] [-k] [-B] [-M] [-F] [-u BPS] [-d BPS] [-l DBM0 | -r RMS] [-e SAMPLES] [-P CODE] [-s SAMPLE] [-b FILE] RECORDING\n"
+        fprintf(stderr, "usage: v90m-replay [-a] [-R] [-9] [-x] [-k] [-B] [-M] [-F] [-u BPS] [-d BPS] [-l DBM0 | -r RMS] [-e SAMPLES] [-P CODE] [-s SAMPLE] [-b FILE] RECORDING\n"
                         "  -l: a number with up to two decimals, e.g. -14.4; -r: the transmit rms, 1..16384;\n"
                         "  -s: a sample index, 0 or more; -B: Bell 103 and 212A offered too;\n"
                         "  -M: mark only in data mode; -F: print the caller's V.42 frames\n");
