@@ -24,6 +24,9 @@ Added (both roles):
 Added (answering role):
 - `v90m_stats.ec_*` (appended): V.34's echo cancellers, in data mode.
 
+Added (tools):
+- `v90m-replay -V` (V.90 not offered); recordings up to 3 hours.
+
 Changed (V.34, both roles):
 - When the round trip is past 160 ms (a packet network), the far echo is
   searched for in Phase 3, the start-up's and every retrain's, rather than

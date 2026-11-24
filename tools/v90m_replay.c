@@ -2,9 +2,10 @@
  * it made of it, phase by phase. The tool to run on a recording that comes
  * with a bug report (README: "Reporting a bug").
  *
- *   v90m-replay [-a] [-R] [-9] [-x] [-k] [-B] [-M] [-F] [-u BPS] [-d BPS] [-l DBM0 | -r RMS] [-e SAMPLES] [-P CODE] [-s SAMPLE] [-b FILE] RECORDING
+ *   v90m-replay [-a] [-V] [-R] [-9] [-x] [-k] [-B] [-M] [-F] [-u BPS] [-d BPS] [-l DBM0 | -r RMS] [-e SAMPLES] [-P CODE] [-s SAMPLE] [-b FILE] RECORDING
  *
  *   -a          A-law line (mu-law otherwise)
+ *   -V          V.90 not offered (V.34 and below)
  *   -R          retrain_on_step
  *   -9          V.92 offered (PCM upstream up to 48000 bit/s unless -u)
  *   -x          x2 offered
@@ -232,13 +233,13 @@ static void x2_down(const x2tx_t *t, uint8_t sent)
     }
 }
 
-static int opt_alaw, opt_step, opt_v92, opt_x2, opt_k56, opt_bell, opt_hund = -1200, opt_up, opt_down = 56000, opt_echo = -1, opt_code;
+static int opt_alaw, opt_nov90, opt_step, opt_v92, opt_x2, opt_k56, opt_bell, opt_hund = -1200, opt_up, opt_down = 56000, opt_echo = -1, opt_code;
 static long opt_rms;    /* -r, 0 = from opt_hund */
 
 static void configure(v90m_cfg *c, int lin)
 {
     v90m_cfg_default(c);
-    c->modulations = V90M_MOD_V21 | V90M_MOD_V22 | V90M_MOD_V32BIS | V90M_MOD_V34 | V90M_MOD_V90 | (opt_v92 ? V90M_MOD_V92 : 0)
+    c->modulations = V90M_MOD_V21 | V90M_MOD_V22 | V90M_MOD_V32BIS | V90M_MOD_V34 | (opt_nov90 ? 0 : V90M_MOD_V90) | (opt_v92 ? V90M_MOD_V92 : 0)
                      | (opt_x2 ? V90M_MOD_X2 : 0) | (opt_k56 ? V90M_MOD_K56 : 0)
                      | (opt_bell ? V90M_MOD_BELL103 | V90M_MOD_BELL212A : 0);
     c->tx_level = opt_rms ? (int)opt_rms : level_rms(opt_hund);
@@ -255,7 +256,7 @@ static void configure(v90m_cfg *c, int lin)
 
 int main(int argc, char **argv)
 {
-    static uint8_t file[(24 << 20) + 8];
+    static uint8_t file[(256 << 20) + 8];  /* 3 hours of 16-bit linear receive */
     static long dsec[120];
     rec_t r; v90m_cfg c; v90m_ec_cfg ecc; v90m_t *m; answer_t *a;
     long len, ans, k0, i, diff = 0, first = -1;
@@ -268,6 +269,7 @@ int main(int argc, char **argv)
     for (arg = 1; arg < argc && argv[arg][0] == '-' && argv[arg][1]; arg++) {
         const char *o = argv[arg];
         if (!strcmp(o, "-a")) opt_alaw = 1;
+        else if (!strcmp(o, "-V")) opt_nov90 = 1;
         else if (!strcmp(o, "-R")) opt_step = 1;
         else if (!strcmp(o, "-9")) opt_v92 = 1;
         else if (!strcmp(o, "-x")) opt_x2 = 1;
@@ -288,7 +290,7 @@ int main(int argc, char **argv)
         else break;
     }
     if (bad || arg >= argc || !(f = fopen(argv[arg], "rb"))) {
-        fprintf(stderr, "usage: v90m-replay [-a] [-R] [-9] [-x] [-k] [-B] [-M] [-F] [-u BPS] [-d BPS] [-l DBM0 | -r RMS] [-e SAMPLES] [-P CODE] [-s SAMPLE] [-b FILE] RECORDING\n"
+        fprintf(stderr, "usage: v90m-replay [-a] [-V] [-R] [-9] [-x] [-k] [-B] [-M] [-F] [-u BPS] [-d BPS] [-l DBM0 | -r RMS] [-e SAMPLES] [-P CODE] [-s SAMPLE] [-b FILE] RECORDING\n"
                         "  -l: a number with up to two decimals, e.g. -14.4; -r: the transmit rms, 1..16384;\n"
                         "  -s: a sample index, 0 or more; -B: Bell 103 and 212A offered too;\n"
                         "  -M: mark only in data mode; -F: print the caller's V.42 frames\n");
