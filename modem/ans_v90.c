@@ -116,6 +116,7 @@ void ans_v90_retrain(answer_t *a)
 static void start_v34_call(answer_t *a)
 {
     v34ans_cfg c;
+    v34ans_watch_t w = a->v34.w;        /* in a retrain, the call's best SNR stands */
     int sr = a->p2.info1a.up_sr;
     /* a retrain's Phase 2 has no INFO0: what the caller's INFO0a said holds */
     if (a->p2.n_info0d > 0) a->info0a = a->p2.info0a;
@@ -123,6 +124,7 @@ static void start_v34_call(answer_t *a)
     if (!(a->cfg.modes & V8_MOD_V34) || sr > 5 || !((a->p2cfg.up_sr_mask >> sr) & 1)
         || v34ans_init_call(&a->v34, &c, &a->p2.info1a, (a->p2cfg.up_hi_carrier >> sr) & 1,
                             a->info0a.c1664, a->p2.rtd) != 0) { ans_fail(a, ans_retrain_or(a, ANS_END_FAILED)); return; }
+    a->v34.w = w;
     ans_enter(a, ANS_V34); a->t = 0;
 }
 

@@ -2,6 +2,7 @@
   data: 28800 bit/s to it, 28800 bit/s from it; 86400 / 86400 bits, 0 / 0 bad; SNR 38.1 dB, rtd 45
   after our retrain: 28800 bit/s to it, 28800 bit/s from it; 86400 / 86400 bits, 0 / 0 bad; SNR 38.1 dB, rtd 46
   after the caller's retrain: 28800 bit/s to it, 28800 bit/s from it; 86400 / 86400 bits, 0 / 0 bad; SNR 36.4 dB, rtd 45
+  a retrain that trained badly: the watch retrained 50 s later
   high carrier, filter 3, ceilings: 14400 bit/s to it, 9600 bit/s from it; 43200 / 28800 bits, 0 / 0 bad; SNR 37.0 dB, rtd 45
   caller's signal lost in data mode: over after 530 ms, 0 retrain(s)
-answer_v90_v34: 102 checks, 0 failures
+answer_v90_v34: 110 checks, 0 failures

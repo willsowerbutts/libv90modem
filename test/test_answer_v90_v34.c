@@ -126,6 +126,7 @@ static int16_t c_tick(void *u, int16_t rx)
 }
 
 static answer_t A; static caller_t C; static line34_t L; static prbs_t UA, UC;
+static int retrain_on_step;
 
 static int16_t a_tick(void *u, int16_t rx) { return answer_tick((answer_t *)u, rx); }
 
@@ -138,6 +139,7 @@ static void start(unsigned modes, int max_down, int max_up, int hi_carrier, int 
     memset(&UA, 0, sizeof UA); memset(&UC, 0, sizeof UC); UA.tx = 1; UC.tx = 77;
     memset(&ac, 0, sizeof ac);
     ac.level = 3000; ac.modes = modes; ac.getbit = p_get; ac.putbit = p_put; ac.user = &UA;
+    ac.retrain_on_step = retrain_on_step;
     answer_init(&A, &ac);
     answer_v90_line(&A, 0, max_down, max_up);
     c_init(&C, &UC, hi_carrier, preemph); line34_init(&L, &lc);
@@ -225,6 +227,24 @@ int main(void)
     run(4000);
     CHECK_EQ_I(C.dx.state, DX_FAILED); CHECK_EQ_I(C.dx.error, DX_ERR_CLEARDOWN);
     CHECK_EQ_I(answer_snr_db10(&A), -1); CHECK_EQ_I(answer_rtd(&A), -1);
+
+    /* ---- retrain_on_step: the call's best SNR outlives a retrain through
+     * V.90's Phase 2: one that trained badly (here, noise that came with it)
+     * is seen against it ---- */
+    retrain_on_step = 1;
+    start(ALL, 0, 0, 0, 0, 0, 0);
+    CHECK_EQ_I(to_data(25000), 1);
+    run(8000L * 25);
+    CHECK(A.v34.w.best > 0);
+    CHECK_EQ_I(answer_retrain(&A), 0);
+    L.c.noise = 60;
+    CHECK_EQ_I(to_data(15000), 1);
+    for (t = 0; t < 8000L * 70 && A.retrains == 1; t += 800) run(800);
+    printf("  a retrain that trained badly: the watch retrained %.0f s later\n", t / 8000.0);
+    CHECK_EQ_I(A.retrains, 2);
+    CHECK_EQ_I(to_data(15000), 1);
+    CHECK_EQ_I(A.v34.w.fails, 1); CHECK_EQ_I(A.v34.w.hold, 480000);
+    retrain_on_step = 0;
 
     /* ---- the caller asks for the high carrier and a pre-emphasis filter;
      * rate ceilings; then the caller clears down ---- */

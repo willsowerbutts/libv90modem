@@ -16,6 +16,10 @@ Added (both roles):
   jitter buffer moves our echo out of the cancellers' reach, and when a
   rate renegotiation's training fails. `v90m-replay -R` sets it. With it
   off, nothing changes.
+- Answering, `retrain_on_step` also retrains when the SNR has stayed 6 dB
+  or more below the call's best for 30 s, as after a retrain that trained
+  while the path was still moving; less and less often while that does not
+  help.
 
 Added (answering role):
 - `v90m_stats.ec_*` (appended): V.34's echo cancellers, in data mode.

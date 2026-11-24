@@ -1,10 +1,54 @@
 /* V.34 answer modem. See v34ans.h. */
 #include <string.h>
 #include "v34ans.h"
+#ifdef P34D_TRACE
+#include <stdio.h>
+#include "probe.h"
+#endif
 
 #define RETRAIN_SILENCE 560     /* 70 ms (11.5.2) */
+/* retrain_on_step's watch on the long run (v34ans.h), in samples */
+#define W_SHIFT    16           /* avg's time constant: 65536 samples, some 8 s */
+#define W_SETTLE   160000       /* 20 s of data before avg counts */
+#define W_LOW      240000       /* 30 s 6 dB or more below the best: retrain */
+#define W_HOLD0    480000       /* then wait 1 min before the next, doubling ... */
+#define W_HOLD_MAX 7680000      /* ... up to 16 min */
+#define W_FAILS    3            /* retrains in a row that did not help: the circuit has
+                                   changed; take where it is now for its best */
 
 static void end(v34ans_t *a, int err) { a->state = V34A_ENDED; a->error = err; }
+
+static void watch(v34ans_t *a)
+{
+    v34ans_watch_t *w = &a->w;
+    int64_t m;
+    if (w->since < INT32_MAX) w->since++;
+    /* a renegotiation only pauses the watch: a slide that renegotiates down every
+       minute or so would otherwise never stay low for W_LOW at a stretch */
+    if (a->state == V34A_RENEG || (a->state == V34A_DATA && !a->dx.up.rx_ready)) return;
+    if (a->state != V34A_DATA) { w->data = w->low = 0; return; }
+    /* Q24: at 38 dB the error is some 10, and W_SHIFT would leave nothing of a smaller scale */
+    m = (a->dx.up.rx.mse_acc > 0 ? a->dx.up.rx.mse_acc : 1) << 16;
+    if (w->data == 0) w->avg = m;                       /* afresh after each start and retrain */
+    else w->avg += (m - w->avg) >> W_SHIFT;
+    if (w->data < W_SETTLE) { w->data++; return; }
+    if (!w->best || w->avg < w->best) w->best = w->avg;
+    if (w->avg / 4 < w->best) {                         /* within 6 dB of the best */
+        w->low = 0;
+        if (w->fails) { w->fails = 0; w->hold = 0; }
+        return;
+    }
+    if (++w->low < W_LOW || w->since < w->hold) return;
+    w->low = 0;
+    if (w->fails >= W_FAILS) { w->best = w->avg; w->fails = 0; w->hold = 0; return; }
+#ifdef P34D_TRACE
+    printf("          V.34 watch: SNR %d held 6 dB or more below the call's best %d; retrain\n",
+           probe_db10((int64_t)65536 << 8, w->avg >> 16), probe_db10((int64_t)65536 << 8, w->best >> 16));
+#endif
+    w->fails++; w->since = 0;
+    w->hold = !w->hold ? W_HOLD0 : w->hold > W_HOLD_MAX / 2 ? W_HOLD_MAX : w->hold * 2;
+    v34dx_retrain(&a->dx);
+}
 
 static void p2_cfg(const v34ans_t *a, p2ans_cfg *c)
 {
@@ -82,6 +126,7 @@ int16_t v34ans_tick(v34ans_t *a, int16_t rx)
     case V34A_DATA:
     case V34A_RENEG:
         out = v34dx_tick(&a->dx, rx);
+        if (a->cfg.retrain_on_step) watch(a);
         if (a->dx.state == DX_DATA) {
             if (a->state == V34A_TRAINING) { a->connects++; a->retrains_now = 0; }
             a->state = V34A_DATA;

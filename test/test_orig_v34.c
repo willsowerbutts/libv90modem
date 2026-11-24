@@ -402,6 +402,81 @@ int main(void)
             data_ok(3);
             report("after the retrain");
         }
+        /* the path moves again after the retrain's far search, during the rest
+         * of its training (a burst of late packets): the cancellers are
+         * trained on an echo that is gone, the call goes on at a low rate,
+         * and nothing falls further for rate_down to see. The watch on the
+         * long run sees the SNR held 6 dB or more below the call's best for
+         * 30 s and retrains */
+        lc.law = 1;                                         /* as an ATA: some 38 dB */
+        if (call_up("far echo, moves during training", &lc, 0, 0, 24000)) {
+            int rx0 = A.rx_bitrate, low;
+            double sum = 0;
+            for (t = 0; t < 8000L * 25; t += 8) { run(8); sum += A.v34.dx.up.rx.mse_acc / 256.0; }
+            sum /= 8000.0 * 25 / 8;
+            printf("  after 25 s of data: the watch's average error %.2f, its best %.2f; the receiver's %.2f\n",
+                   A.v34.w.avg / 16777216.0, A.v34.w.best / 16777216.0, sum);
+            CHECK(A.v34.w.best / 16777216.0 > 0.9 * sum);   /* settled, and near the average on a steady line */
+            CHECK(A.v34.w.avg / 16777216.0 > 0.95 * sum); CHECK(A.v34.w.avg / 16777216.0 < 1.05 * sum);
+            L.c.d_ac += 160;
+            for (t = 0; t < 8000L * 15 && !(A.v34.state == V34A_TRAINING && A.v34.dx.state >= DX_P3_J); t += 8) run(8);
+            CHECK_EQ_I(A.v34.dx.state >= DX_P3_J, 1);
+            L.c.d_ac += 160;
+            CHECK_EQ_I(to_data(30000), 1);
+            run(8000L * 5);
+            low = A.rx_bitrate;
+            CHECK_EQ_I(A.retrains, 1);
+            for (t = 0; t < 8000L * 90 && A.retrains == 1; t += 800) run(800);
+            CHECK_EQ_I(to_data(30000), 1);
+            printf("  path moved during the retrain's training: answerer received %d bit/s, the watch retrained %.0f s later; receives %d bit/s (was %d)\n",
+                   low, t / 8000.0 + 5, A.rx_bitrate, rx0);
+            CHECK(low < rx0 - 2400);
+            CHECK_EQ_I(A.retrains, 2);
+            CHECK(A.rx_bitrate >= rx0 - 2400);
+            data_ok(3);
+            report("after the watch's retrain");
+        }
+        /* the same, and renegotiations every 20 s as the SNR slides (a real
+         * one did, well within the 50 s the watch needs to settle and see
+         * it low): a renegotiation only pauses the watch */
+        if (call_up("far echo, moves during training, renegotiations", &lc, 0, 0, 24000)) {
+            int rx0 = A.rx_bitrate, renegs = 0;
+            run(8000L * 25);
+            L.c.d_ac += 160;
+            for (t = 0; t < 8000L * 15 && !(A.v34.state == V34A_TRAINING && A.v34.dx.state >= DX_P3_J); t += 8) run(8);
+            L.c.d_ac += 160;
+            CHECK_EQ_I(to_data(30000), 1);
+            CHECK_EQ_I(A.retrains, 1);
+            for (t = 0; t < 8000L * 90 && A.retrains == 1; t += 800) {
+                if (t % (8000L * 20) == 0 && O.e.v34.dx.state == DX_DATA) { CHECK_EQ_I(orig_renegotiate(&O, 0), 0); renegs++; }
+                run(800);
+            }
+            CHECK_EQ_I(to_data(30000), 1);
+            printf("  path moved during the retrain's training, renegotiations every 20 s: the watch retrained %.0f s later after %d renegotiations; receives %d bit/s (was %d)\n",
+                   t / 8000.0, renegs, A.rx_bitrate, rx0);
+            CHECK_EQ_I(A.retrains, 2);
+            CHECK(renegs >= 2);
+            CHECK(t < 8000L * 60);
+            CHECK(A.rx_bitrate >= rx0 - 2400);
+            data_ok(3);
+            report("after the watch's retrain");
+        }
+        /* three of the watch's retrains in a row did not help: it takes the
+         * SNR now for the best, and starts over, its wait too */
+        if (call_up("far echo, then more noise", &lc, 0, 0, 24000)) {
+            int64_t best;
+            run(8000L * 25);
+            best = A.v34.w.best;
+            CHECK_EQ_I(answer_retrain(&A), 0);
+            L.c.noise = 15 * good.noise;
+            A.v34.w.fails = 3; A.v34.w.hold = 1920000; A.v34.w.since = 1920000;
+            CHECK_EQ_I(to_data(30000), 1);
+            run(8000L * 60);
+            printf("  more noise for good: the watch's best error %.1f, was %.1f\n",
+                   A.v34.w.best / 16777216.0, best / 16777216.0);
+            CHECK_EQ_I(A.retrains, 1);
+            CHECK(A.v34.w.best > 4 * best); CHECK_EQ_I(A.v34.w.fails, 0); CHECK_EQ_I(A.v34.w.hold, 0);
+        }
         retrain_on_step = 0;
         lc = good; lc.loop = LOOP_LONG; lc.nloop = 3;
         if (call_up("long loop (13 dB down at 3 kHz)", &lc, 0, 0, 9600)) {

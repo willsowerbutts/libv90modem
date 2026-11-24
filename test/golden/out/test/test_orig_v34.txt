@@ -40,5 +40,14 @@
   far echo, the caller renegotiates  3200 sym/s  C->A 31200 bit/s  124800 bits 0 err  A->C 28800 bit/s  115200 bits 0 err  SNR 37.7 dB, rtd 2371
   path 20 ms longer, the caller renegotiates: answerer 1 retrains, phase 8; receives 31200 bit/s (was 31200)
   after the retrain                  3200 sym/s  C->A 31200 bit/s   93600 bits 0 err  A->C 28800 bit/s   86400 bits 0 err  SNR 38.1 dB, rtd 2531
+  far echo, moves during training    3200 sym/s  C->A 28800 bit/s  115200 bits 0 err  A->C 28800 bit/s  115200 bits 0 err  SNR 38.1 dB, rtd 2371
+  after 25 s of data: the watch's average error 15.03, its best 15.01; the receiver's 14.98
+  path moved during the retrain's training: answerer received 7200 bit/s, the watch retrained 50 s later; receives 28800 bit/s (was 28800)
+  after the watch's retrain          3200 sym/s  C->A 28800 bit/s   86400 bits 0 err  A->C 28800 bit/s   86400 bits 0 err  SNR 37.7 dB, rtd 2691
+  far echo, moves during training, renegotiations 3200 sym/s  C->A 28800 bit/s  115200 bits 0 err  A->C 28800 bit/s  115200 bits 0 err  SNR 38.1 dB, rtd 2371
+  path moved during the retrain's training, renegotiations every 20 s: the watch retrained 52 s later after 3 renegotiations; receives 28800 bit/s (was 28800)
+  after the watch's retrain          3200 sym/s  C->A 28800 bit/s   86400 bits 0 err  A->C 28800 bit/s   86400 bits 0 err  SNR 37.7 dB, rtd 2691
+  far echo, then more noise          3200 sym/s  C->A 28800 bit/s  115200 bits 0 err  A->C 28800 bit/s  115200 bits 0 err  SNR 38.1 dB, rtd 2371
+  more noise for good: the watch's best error 178.2, was 15.0
   long loop (13 dB down at 3 kHz)    3200 sym/s  C->A 12000 bit/s   48000 bits 0 err  A->C 24000 bit/s   96000 bits 0 err  SNR 33.3 dB, rtd 373
-orig_v34: 645 checks, 0 failures
+orig_v34: 753 checks, 0 failures

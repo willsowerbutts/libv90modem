@@ -243,7 +243,8 @@ typedef struct {
                                        a path whose echo can move mid-call, as through a VoIP
                                        jitter buffer that grows by a packet. Also retrain when a
                                        rate renegotiation's training fails, rather than end the
-                                       call. Default 0 */
+                                       call. Answering, also when the SNR has stayed 6 dB or more
+                                       below the call's best for 30 s. Default 0 */
     v90m_getbit_fn getbit;
     v90m_putbit_fn putbit;
     v90m_event_fn  on_event;        /* may be NULL: poll v90m_get_state() instead */
