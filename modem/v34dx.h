@@ -129,8 +129,6 @@ typedef struct {
     v34_params_t tpar; v34_tx_t vtx; int32_t tx_dg;
     uint32_t    tx_count[DXS_N];    /* symbols sent of each signal so far */
     int32_t     tx_first[DXS_N];    /* sample clock at the first / at the latest start */
-    int         far_search;         /* Phase 2's round trip is past the near search's reach:
-                                       Phase 3 also searches for the far echo near it */
     /* ---- echo ---- */
     ec_t        ec, fec;            /* near; far (round trip later), when far_on */
     int         ec_mu, far_on;
@@ -140,6 +138,8 @@ typedef struct {
     int         far_back;           /* the far canceller's window starts this many samples
                                        before the near one's (during the far search: the near
                                        delay, kept while the search uses ecd.delay) */
+    int         far_search;         /* Phase 2's round trip is past the near search's reach:
+                                       Phase 3 also searches for the far echo near it */
     /* ---- receive ---- */
     sdet_t      sdet;
     qamrx_t     rx;
@@ -169,12 +169,12 @@ typedef struct {
     int         tx_starts, rx_starts;   /* times data mode began in each direction: the first
                                        bit asked of getbit / given to putbit after each is
                                        the first bit of that stretch of data */
-    int32_t     mse_ref;            /* rx.mse lately, Q12, followed while within mse_limit (a
-                                       time constant of 4096 symbols): what rate_down measures
-                                       a fall from */
     /* the far modem's retrain tone, 10 ms blocks */
     tonedet_t   tone;               /* the far modem's retrain tone */
     int32_t     mse_limit, q_bad, q_dead;
+    int32_t     mse_ref;            /* rx.mse lately, Q12, followed while within mse_limit (a
+                                       time constant of 4096 symbols): what rate_down measures
+                                       a fall from */
     int         rate_drops;
 } v34dx_t;
 

@@ -46,6 +46,7 @@ void v34orig_dx_cfg(const p2call_t *p2, const v34orig_cfg *cfg, int peer_1664, v
     dx->max_rx_rate = cfg->max_rx_rate;
     dx->max_tx_rate = cfg->max_tx_rate;
     dx->getbit = cfg->getbit; dx->putbit = cfg->putbit; dx->user = cfg->user;
+    dx->retrain_on_step = cfg->retrain_on_step;
 }
 
 /* a retrain is due, whoever began it: 70 ms of silence, then Phase 2 again */
@@ -69,7 +70,6 @@ int16_t v34orig_tick(v34orig_t *o, int16_t rx)
             if (!o->have0a || o->p2.n_info0c > 0) { o->info0a = o->p2.info0a; o->have0a = 1; }
             o->retrains += o->p2.retrains; o->retrains_ours += o->p2.retrains;
             v34orig_dx_cfg(&o->p2, &o->cfg, o->info0a.c1664, &c);
-            c.retrain_on_step = o->retrain_on_step;
             /* 11.3.1.1.1: silent, waiting for the answerer's S */
             if (v34dx_init(&o->dx, &c) != 0) end(o, V34O_ERR_TRAINING);
             else o->state = V34O_TRAINING;

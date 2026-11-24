@@ -183,9 +183,9 @@ static void test_cfg(void)
         /* pinned: what v90d sizes its buffers by (K56flex's state lives in
          * the answerer's union) */
 #if defined(__x86_64__)
-        size_t expect = 118824;
+        size_t expect = 118856;
 #elif defined(__arm__)
-        size_t expect = 118512;
+        size_t expect = 118544;
 #else
         size_t expect = v90m_mem_size();
 #endif

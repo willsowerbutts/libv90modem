@@ -69,8 +69,8 @@ static void start_v34(orig_t *o)
     c.io_delay = o->cfg.echo_delay;
     c.max_tx_rate = o->cfg.max_tx_bps; c.max_rx_rate = o->cfg.max_rx_bps;
     c.getbit = o->cfg.getbit; c.putbit = o->cfg.putbit; c.user = o->cfg.user;
+    c.retrain_on_step = o->cfg.retrain_on_step;
     v34orig_init(&o->v34, &c);
-    o->v34.retrain_on_step = o->cfg.retrain_on_step;
     o->phase = ORIG_V34; o->t = 0;
 }
 

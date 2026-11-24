@@ -46,6 +46,7 @@ struct v90m {
     int      owned;             /* from v90m_create: v90m_destroy frees it */
     /* what the last sample left, to report changes */
     int      was_connected, was_moving, was_ended, was_mod, was_tx, was_rx;
+    int      reneg_pending;     /* data stopped in a call, neither retraining nor over */
     unsigned renegotiations;
     union { answer_t a; orig_t o; } u;     /* by cfg.role */
 };
@@ -242,8 +243,6 @@ static v90m_end end_of(const v90m_t *m)
 
 static void event(v90m_t *m, v90m_event ev) { if (m->cfg.on_event) m->cfg.on_event(m->cfg.user, ev); }
 
-#define RENEG_PENDING 2
-
 /* after each sample: only reads the modem */
 static void after(v90m_t *m)
 {
@@ -260,12 +259,12 @@ static void after(v90m_t *m)
         event(m, V90M_EV_RATES);
     }
     /* A stop is a rate renegotiation when data moves again with neither a
-     * retrain nor the end in between: a cleardown also stops the data first.
-     * Until then was_moving is RENEG_PENDING, not 0: the memory size is pinned. */
-    if (m->was_moving == RENEG_PENDING && (retraining_of(m) || failed)) m->was_moving = 0;
-    if (moving != (m->was_moving == 1)) {
-        if (moving && m->was_moving == RENEG_PENDING) m->renegotiations++;
-        m->was_moving = moving ? 1 : connected && !retraining_of(m) && !failed ? RENEG_PENDING : 0;
+     * retrain nor the end in between: a cleardown also stops the data first. */
+    if (retraining_of(m) || failed) m->reneg_pending = 0;
+    if (moving != m->was_moving) {
+        if (moving && m->reneg_pending) m->renegotiations++;
+        m->reneg_pending = !moving && connected && !retraining_of(m) && !failed;
+        m->was_moving = moving;
         event(m, moving ? V90M_EV_DATA_MOVING : V90M_EV_DATA_STOPPED);
     }
     if (failed && !m->was_ended) {
