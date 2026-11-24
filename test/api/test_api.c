@@ -189,9 +189,9 @@ static void test_cfg(void)
          * by construction (no pin), so that every target prints the same
          * count of checks */
 #if defined(__x86_64__)
-        size_t expect = 106320, was = 118824;
+        size_t expect = 106328, was = 118824;
 #elif defined(__arm__)
-        size_t expect = 106016, was = 118512;
+        size_t expect = 106024, was = 118512;
 #else
         size_t expect = v90m_mem_size(), was = expect + 12000;
 #endif

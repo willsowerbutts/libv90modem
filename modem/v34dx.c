@@ -42,6 +42,7 @@ static void tx_go(v34dx_t *p, int sig)
 }
 
 static void enter(v34dx_t *p, v34dx_state s) { p->state = s; p->t = 0; }
+static int32_t far_from(const v34dx_t *p);
 
 static void stop(v34dx_t *p)
 {
@@ -88,6 +89,8 @@ int v34dx_init(v34dx_t *p, const v34dx_cfg *cfg)
     p->tx_pts = 4; p->tx_g = 16384;
     samples = EC_SETTLE + EC_FAST + EC_SLOW;
     if (cfg->echo_delay < 0) samples += ECDLY_SAMPLES;
+    p->far_search = cfg->rtd > ECDLY_MAXLAG;
+    if (p->far_search) samples = far_from(p) + ECDLY_SAMPLES + EC_FAST + EC_SLOW;
     p->trn_syms = (int32_t)(((int64_t)samples * cfg->sym_rate) / 8000) + 1;
     if (p->trn_syms < 512) p->trn_syms = 512;
     p->trn4_syms = TRN4_SYMS;
@@ -423,13 +426,49 @@ static void s_heard(v34dx_t *p)
 
 /* ---- echo: delay search and training during the TRN of Phase 3 ---- */
 
-static void ec_schedule(v34dx_t *p, int16_t rxs)
+/* the TRN sample the far search starts on: after the near search, and late
+ * enough that every lag it tries reaches back into TRN, not S or PP (whose
+ * period would give peaks at many lags) */
+static int32_t far_from(const v34dx_t *p)
+{
+    int32_t from = EC_SETTLE + (p->cfg.echo_delay < 0 ? ECDLY_SAMPLES : 0);
+    int32_t trn = (int32_t)ecdly_near_base(p->cfg.rtd) + 8;
+    return from > trn ? from : trn;
+}
+
+static void ec_schedule(v34dx_t *p, int16_t rxs, int16_t x)
 {
     int32_t n = ++p->trn_t, from = EC_SETTLE;
+    int measure = p->cfg.echo_delay < 0;
     /* how late is our echo (ecdly.h), when not known? On the samples as they
      * are. Two cancellers on one error share the step: each at full step
      * would be one filter at twice the step NLMS can take */
-    p->ec_mu = v34up_ec_schedule(&p->ec, &p->ecd, p->cfg.echo_delay < 0, 0, rxs, n, &from, EC_FAST, p->far_on ? 1 : 0);
+    if (!p->far_search) {
+        p->ec_mu = v34up_ec_schedule(&p->ec, &p->ecd, measure, 0, rxs, n, &from, EC_FAST, p->far_on ? 1 : 0);
+    } else {
+        /* then the far end's echo, where it is now: a packet network's jitter
+         * buffers can have moved it since Phase 2 measured the round trip.
+         * The same measurement around that round trip (ecdly_near), on what
+         * the near canceller, learning alone, leaves: a near echo many times
+         * the far one would otherwise outweigh it in a short window */
+        int32_t at = far_from(p);
+        if (n < at) {
+            p->ec_mu = v34up_ec_schedule(&p->ec, &p->ecd, measure, 0, rxs, n, &from, at, 0);
+        } else {
+            if (n == at) {
+                p->far_back = p->ecd.delay;
+                ecdly_restart(&p->ecd);
+                ecdly_near(&p->ecd, p->cfg.rtd);
+            } else if (n <= at + ECDLY_SAMPLES && ecdly_measure(&p->ecd, n - at, x, 0)) {
+                int d = p->ecd.delay + 8 - FAR_LEAD;    /* ecdly leaves delay 8 before the peak */
+                p->ecd.delay = p->far_back;
+                p->far_back = d - p->ecd.delay;
+            }
+            p->ec_mu = n < at + ECDLY_SAMPLES ? 0
+                     : n < at + ECDLY_SAMPLES + EC_FAST ? (p->far_on ? 1 : 0) : 3;
+        }
+        from = at + ECDLY_SAMPLES;
+    }
     if (n == from) {
         /* the far end's echo of our signal, a round trip later */
         int lag;
@@ -437,10 +476,11 @@ static void ec_schedule(v34dx_t *p, int16_t rxs)
             p->cfg.rtd_has_io = 0;
             p->cfg.rtd = p->cfg.rtd > p->ecd.delay + 8 ? p->cfg.rtd - p->ecd.delay - 8 : 0;
         }
-        lag = p->ecd.delay + p->cfg.rtd - FAR_LEAD;
-        p->far_on = p->cfg.rtd > FAR_MIN_RTD && lag + EC_NTAP < ECDLY_HIST - 8;
-        /* (its first sample of the fast step: v34up_ec_schedule's mu came
-         * from far_on as it was before this sample) */
+        if (!p->far_search) p->far_back = p->cfg.rtd - FAR_LEAD;
+        lag = p->ecd.delay + p->far_back;
+        p->far_on = p->cfg.rtd > FAR_MIN_RTD && p->far_back > 0 && lag + EC_NTAP < ECDLY_HIST - 8;
+        /* (its first sample of the fast step: the mu above came from far_on
+         * as it was before this sample) */
         p->ec_mu = p->far_on ? 1 : 0;
     }
 }
@@ -547,7 +587,7 @@ int16_t v34dx_tick(v34dx_t *p, int16_t rxs)
     if (p->far_on) {
         /* both learn from what is left after both */
         x = ec_tick(&p->ec, ecdly_ref(&p->ecd, 0), rxs, -1);
-        x = ec_tick(&p->fec, ecdly_ref(&p->ecd, p->cfg.rtd - FAR_LEAD), x, p->ec_mu);
+        x = ec_tick(&p->fec, ecdly_ref(&p->ecd, p->far_back), x, p->ec_mu);
         ec_adapt(&p->ec, x, p->ec_mu);
     } else {
         x = ec_tick(&p->ec, ecdly_ref(&p->ecd, 0), rxs, p->ec_mu);
@@ -580,7 +620,7 @@ int16_t v34dx_tick(v34dx_t *p, int16_t rxs)
         if ((int64_t)p->t > MS(T_FIRST_S_MS) + MS(p->cfg.md_len * 35)) fail(p, DX_ERR_NO_S);
         break;
     case DX_P3_TX:
-        if (p->txsig == DXS_TRN) ec_schedule(p, rxs);
+        if (p->txsig == DXS_TRN) ec_schedule(p, rxs, x);
         if (p->txsig == DXS_J) {
             p->ec_mu = -1;
             if (p->cfg.answer) {
@@ -704,7 +744,7 @@ void v34dx_echo(const v34dx_t *p, v34dx_echo_t *e)
     e->near_peak = ec_peak(&p->ec);
     e->near_loss_db10 = loss_db10(&p->ec);
     if (p->far_on) {
-        e->far_delay = p->ecd.delay + p->cfg.rtd - FAR_LEAD;
+        e->far_delay = p->ecd.delay + p->far_back;
         e->far_peak = ec_peak(&p->fec);
         e->far_loss_db10 = loss_db10(&p->fec);
     } else {

@@ -13,6 +13,14 @@ this library's own answering modem, never against a real modem or server.
 Added (answering role):
 - `v90m_stats.ec_*` (appended): V.34's echo cancellers, in data mode.
 
+Changed (V.34, both roles):
+- When the round trip is past 160 ms (a packet network), the far echo is
+  searched for in Phase 3, the start-up's and every retrain's, rather than
+  taken to be at the round trip Phase 2 measured: a jitter buffer may have
+  moved it since. TRN is longer for the search, by 0.2 to 0.5 s. A calling
+  modem without a far echo no longer loses downstream there (0.6.0's
+  docs/limits.md: 12000 bit/s at 400 ms).
+
 ## 0.6.0 (2026-11-24)
 
 Security (V.92, calling role; no 0.5.x patch: upgrade to 0.6.0):

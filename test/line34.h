@@ -26,6 +26,8 @@ typedef struct {
                                    terminals (a driver's buffers) */
     double echo_c;              /* caller's hybrid */
     double far_a;               /* answer side: echo from the far hybrid, a round trip late */
+    int far_lag;                /* ... and this many samples later again (0 = right at the hybrid; an
+                                   ATA's response peaks near the round trip the modems measure) */
     double noise;               /* RMS at each receiver */
     double ppm;                 /* the caller's clock against ours */
     double foff_ca, foff_ac;    /* frequency offset of each direction, Hz */
@@ -118,8 +120,8 @@ static int16_t line34_step(line34_t *l, line34_tick_fn atick, void *am, line34_t
     if (l->n >= c->mute_ca_from && l->n < c->mute_ca_to) v = 0;
     v += c->echo_a * (0.6 * l34_at(l->la, l->pos, c->io_delay) + 0.5 * l34_at(l->la, l->pos, c->io_delay + 2)
                       - 0.3 * l34_at(l->la, l->pos, c->io_delay + 6));
-    v += c->far_a * (0.7 * l34_at(l->la, l->pos, c->io_delay + c->d_ac + c->d_ca + 1)
-                     + 0.4 * l34_at(l->la, l->pos, c->io_delay + c->d_ac + c->d_ca + 4));
+    v += c->far_a * (0.7 * l34_at(l->la, l->pos, c->io_delay + c->d_ac + c->d_ca + c->far_lag + 1)
+                     + 0.4 * l34_at(l->la, l->pos, c->io_delay + c->d_ac + c->d_ca + c->far_lag + 4));
     v += c->noise * rng_gauss(&l->rng);
     if (c->click_at > 0 && l->n >= c->click_at && l->n < c->click_at + 6) v = (l->n - c->click_at) & 1 ? -32124.0 : 32124.0;
     l->arx = (int16_t)l34_codec(c->rx_lin ? 0 : c->law, v);

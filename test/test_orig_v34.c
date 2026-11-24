@@ -332,6 +332,31 @@ int main(void)
          * takes less from us (sim/v34peer as the caller gets the same) */
         lc = good; lc.far_a = 0.03;
         if (call_up("far echo 3 %, 40 ms late", &lc, 0, 0, 9600)) CHECK(O.rx_bitrate >= 24000);
+        /* the path towards the caller grows by one 20 ms packet between
+         * Phase 2, which measures the round trip, and Phase 3, which trains
+         * the cancellers (a jitter buffer that took one more, as a real ATA's
+         * did): Phase 3 searches for the far echo near that round trip and
+         * finds where it is now; in the start-up, and in a retrain. The echo
+         * about where an ATA puts it (far_lag) */
+        lc = good; lc.far_a = 0.06; lc.d_ac = 1160; lc.d_ca = 1160; lc.far_lag = 56;
+        for (k = 0; k < 2; k++) {
+            int echo_at;
+            v34dx_echo_t e;
+            if (k == 0) start(&lc, 0, 0, 0);
+            else CHECK_EQ_I(answer_retrain(&A), 0);
+            for (t = 0; t < 8000L * 20 && (A.phase != ANS_V34 || A.v34.state != V34A_TRAINING); t += 8) run(8);
+            CHECK_EQ_I(A.v34.state, V34A_TRAINING);
+            L.c.d_ac += 160;
+            CHECK_EQ_I(to_data(30000), 1);
+            CHECK_EQ_I(A.retrains, k); CHECK_EQ_I(answer_v34_echo(&A, &e), 0);
+            echo_at = L.c.d_ac + L.c.d_ca + L.c.far_lag + 1;        /* line34's far echo, its larger tap */
+            printf("  path 20 ms longer after Phase 2 of the %s: far canceller at %d+%d for an echo at %d\n",
+                   k ? "retrain" : "start-up", e.far_delay, e.far_peak, echo_at);
+            CHECK_NEAR(e.far_delay + e.far_peak, echo_at, 4);
+            CHECK(A.rx_bitrate >= 28800);
+            data_ok(3);
+            report("far echo, 290 ms round trip, moved");
+        }
         lc = good; lc.loop = LOOP_LONG; lc.nloop = 3;
         if (call_up("long loop (13 dB down at 3 kHz)", &lc, 0, 0, 9600)) {
             CHECK(O.bitrate < good_tx); CHECK(O.rx_bitrate < good_rx);

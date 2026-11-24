@@ -105,7 +105,9 @@ modem to its echo starting back: the driver's buffering, both ways. It is
   give `echo_delay` explicitly only if the near echo is the stronger.
 - Answering V.34: the search finds our own path's delay (0 to 160 ms) and
   a second canceller is placed a round trip later for the far echo
-  (`modem/v34dx.c`), so both are cancelled; its reach is about 500 ms.
+  (`modem/v34dx.c`; with a round trip over 160 ms, where a second search
+  near it finds that echo), so both are cancelled; its reach is about
+  500 ms.
 - Calling V.34: -1 has it found in training (`modem/orig.h`).
 - Calling V.90 / V.92: in this version the value is used as a fixed delay
   of the canceller's reference (a delay line of 512 samples, so 0 to 511);

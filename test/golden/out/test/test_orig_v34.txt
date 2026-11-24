@@ -30,5 +30,9 @@
   noise 30 dB down                   3200 sym/s  C->A 19200 bit/s   76800 bits 0 err  A->C 21600 bit/s   86400 bits 0 err  SNR 29.1 dB, rtd 371
   noise 22 dB down                   3200 sym/s  C->A 12000 bit/s   48000 bits 0 err  A->C 12000 bit/s   48000 bits 0 err  SNR 20.8 dB, rtd 371
   far echo 3 %, 40 ms late           3200 sym/s  C->A 16800 bit/s   67200 bits 0 err  A->C 28800 bit/s  115200 bits 0 err  SNR 38.1 dB, rtd 371
+  path 20 ms longer after Phase 2 of the start-up: far canceller at 2522+16 for an echo at 2537
+  far echo, 290 ms round trip, moved 3200 sym/s  C->A 31200 bit/s   93600 bits 0 err  A->C 28800 bit/s   86400 bits 0 err  SNR 37.3 dB, rtd 2371
+  path 20 ms longer after Phase 2 of the retrain: far canceller at 2682+16 for an echo at 2697
+  far echo, 290 ms round trip, moved 3200 sym/s  C->A 31200 bit/s   93600 bits 0 err  A->C 28800 bit/s   86400 bits 0 err  SNR 37.3 dB, rtd 2531
   long loop (13 dB down at 3 kHz)    3200 sym/s  C->A 12000 bit/s   48000 bits 0 err  A->C 24000 bit/s   96000 bits 0 err  SNR 33.3 dB, rtd 373
-orig_v34: 551 checks, 0 failures
+orig_v34: 574 checks, 0 failures

@@ -26,8 +26,8 @@
   all asked of the caller too        3200 sym/s  A->C 31200 bit/s  124800 bits 0 errors   C->A 31200 bit/s  124800 bits 0 errors
   echo delay found: 154 samples (true 160);                                     3200 sym/s  A->C 31200 bit/s  124800 bits 0 errors   C->A 31200 bit/s  124800 bits 0 errors
   far echo 80 ms late, 16 dB down: echo down 59 dB;                                     3200 sym/s  A->C 31200 bit/s  124800 bits 0 errors   C->A 31200 bit/s  124800 bits 0 errors
-  far echo 300 ms, 20 dB down, nothing near: canceller from 2379 (the echo at 2402), echo down 49 dB, upstream error -48.2 dB;                                     3200 sym/s  A->C 28800 bit/s  115200 bits 0 errors   C->A 31200 bit/s  124800 bits 0 errors
-  far echo 400 ms, 20 dB down, nothing near: canceller from 3179 (the echo at 3202), echo down 49 dB, upstream error -45.2 dB;                                     3200 sym/s  A->C 12000 bit/s   48000 bits 0 errors   C->A 31200 bit/s  124800 bits 0 errors
+  far echo 300 ms, 20 dB down, nothing near: canceller from 2387 (the echo at 2402), echo down 50 dB, upstream error -138.2 dB;                                     3200 sym/s  A->C 31200 bit/s  124800 bits 0 errors   C->A 31200 bit/s  124800 bits 0 errors
+  far echo 400 ms, 20 dB down, nothing near: canceller from 3187 (the echo at 3202), echo down 50 dB, upstream error -138.2 dB;                                     3200 sym/s  A->C 31200 bit/s  124800 bits 0 errors   C->A 31200 bit/s  124800 bits 0 errors
   far echo 100 ms, 20 dB down, nothing near: canceller from 795 (the echo at 802), echo down 50 dB, upstream error -138.2 dB;                                     3200 sym/s  A->C 31200 bit/s  124800 bits 0 errors   C->A 31200 bit/s  124800 bits 0 errors
   asymmetric: ceilings 19200 / 26400 3200 sym/s  A->C 19200 bit/s   38400 bits 0 errors   C->A 26400 bit/s   52800 bits 0 errors
   renegotiation took 372 ms;  begun by the answer modem          3200 sym/s  A->C 31200 bit/s   93600 bits 0 errors   C->A 31200 bit/s   93600 bits 0 errors
@@ -46,4 +46,4 @@
   Tone B in data mode: retrain after 61 ms
   caller's signal lost in data mode: carrier lost after 522 ms
   as call modem after V.90 Phase 2   3200 sym/s  A->C 31200 bit/s   93600 bits 0 errors   C->A 28800 bit/s   86400 bits 0 errors
-v34dx: 787 checks, 0 failures
+v34dx: 790 checks, 0 failures

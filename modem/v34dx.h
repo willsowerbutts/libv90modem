@@ -130,6 +130,11 @@ typedef struct {
     ecdly_t     ecd;                /* what we sent; ecd.delay is our own path's delay in use */
     int32_t     trn_t;              /* samples of Phase 3 TRN sent */
     int32_t     pw_in, pw_res;      /* smoothed power into and out of the cancellers */
+    int         far_back;           /* the far canceller's window starts this many samples
+                                       before the near one's (during the far search: the near
+                                       delay, kept while the search uses ecd.delay) */
+    int         far_search;         /* Phase 2's round trip is past the near search's reach:
+                                       Phase 3 also searches for the far echo near it */
     /* ---- receive ---- */
     sdet_t      sdet;
     v34up_t     up;                 /* the receiver; up.rx_ready: data */

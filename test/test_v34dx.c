@@ -81,10 +81,6 @@ static wend_t WA, WC;
 static int w_get(void *u) { return wctr_get(&((wend_t *)u)->out); }
 static void w_put(void *u, int bit) { wctr_put(&((wend_t *)u)->in, bit); }
 
-/* modem/v34dx.c FAR_LEAD: the far canceller's reference starts this many
- * samples before the round trip (keep the two equal) */
-#define V34DX_FAR_LEAD 16
-
 static const dxline_cfg CLEAN = { 20, 24, 0.5, 0.5, 0.3, 0.3, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 static void report(const char *what)
@@ -265,18 +261,19 @@ int main(void)
             pair_init(&a, &c, &lc);
             CHECK_EQ_I(pair_to_data(9000), 1);
             CHECK_EQ_I(P.a.far_on, ms[k] > 160);
-            /* where the canceller's taps begin: the far one's (v34dx.c FAR_LEAD), or the near one's */
-            lag = P.a.far_on ? P.a.ecd.delay + P.a.cfg.rtd - V34DX_FAR_LEAD : P.a.ecd.delay;
+            /* where the canceller's taps begin: the far one's, or the near one's */
+            lag = P.a.ecd.delay + (P.a.far_on ? P.a.far_back : 0);
             sinks_reset(); pair_run(8000L * 4);
             mse_db = 10 * log10((P.a.up.rx.mse + 1e-9) / 65536.0);
-            /* (the report's A->C is the calling side's downstream, not checked here: 31200 at
-             * 100 ms, 28800 at 300, 12000 at 400 ms is known and not yet investigated,
-             * docs/limits.md and docs/history/audit-0.6.md, ISP-1; a fix moves the golden line) */
+            /* (A->C: the calling side has no far echo, and its far canceller must not learn
+             * one: 28800 at 300 ms, 12000 at 400 when it trained before its reference was
+             * all TRN) */
             printf("  far echo %d ms, 20 dB down, nothing near: canceller from %d (the echo at %d), echo down %.0f dB,"
                    " upstream error %.1f dB;", ms[k], lag, e, P.erle_a, mse_db); report("");
             CHECK(lag >= e - 30 && lag <= e);
             CHECK(mse_db < -30);
             CHECK_EQ_I(P.ua.sink.errs, 0); CHECK_EQ_I(P.uc.sink.errs, 0); CHECK(P.a.rx_rate >= 28800);
+            CHECK_EQ_I(P.c.rx_rate, 31200);
         }
     }
 

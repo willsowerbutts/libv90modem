@@ -111,12 +111,6 @@ Each item names where it is recorded.
   noise test (RMS 92) an x2 call stays up for 60 s with about 46% of the
   upstream bits wrong and no end code. There is no watchdog, by ruling.
 
-- **The calling V.34 modem behind a long round trip** gets less
-  downstream: in `test/test_v34dx.c`'s far-echo case (the answer side with
-  a far echo 20 dB down, the call side with its own near echo), 31200 bit/s
-  at a 100 ms round trip, 28800 at 300 ms, 12000 at 400 ms. The answer side
-  is clean at every one. Not investigated (0.6.0 audit, ISP-1 follow-up).
-
 ## Not checked against a specification
 
 - **The Bell 212A calling handshake** follows V.22 and what this library's
@@ -369,7 +363,7 @@ spacing are given, and none of the 3 dB tables but 32000's.
 ## Memory
 
 - **The answering side's state sets the memory of a modem.** One modem,
-  either role, is `v90m_mem_size()` octets: 106320 on x86-64, 106016 on
+  either role, is `v90m_mem_size()` octets: 106328 on x86-64, 106024 on
   ARMv5, within `V90M_MEM_SIZE` (108 KiB) on every port target. The
   calling side's state, whose modulations after V.8 share memory, is some
   52 KiB: shrinking the calling side further (such as a union inside the
