@@ -215,6 +215,7 @@ stay as they were.
 | `ec_in_db10`, `ec_res_db10` | (appended, as the next two rows) answering V.34, in data mode or a rate renegotiation: received power into the echo cancellers and left after them, 0.1 dB below full scale; -1 otherwise |
 | `ec_near_delay`, `ec_near_peak`, `ec_near_loss_db10` | likewise: where the near canceller's 12 ms window starts and the strongest tap in it, samples; the echo path's loss as modelled, 0.1 dB (-1 while empty) |
 | `ec_far_delay`, `ec_far_peak`, `ec_far_loss_db10` | likewise, the canceller of the echo a round trip later; -1 when not in use. An echo that moves out of its window is no longer cancelled |
+| `stop_by`, `stop_why` | (appended) V.34, either role: which end (`V90M_SIDE_NEAR`, `V90M_SIDE_FAR`) last stopped the data, or began training again (a renegotiation that became a retrain, a retrain's next attempt), and why (`V90M_STOP_*`). The far end's signals carry no reason: `V90M_STOP_ASKED`, its cleardown too. Both 0 before the first, and in other modulations |
 
 ## Control calls
 

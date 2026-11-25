@@ -189,9 +189,9 @@ static void test_cfg(void)
          * by construction (no pin), so that every target prints the same
          * count of checks */
 #if defined(__x86_64__)
-        size_t expect = 106384, was = 118824;
+        size_t expect = 106392, was = 118824;
 #elif defined(__arm__)
-        size_t expect = 106088, was = 118512;
+        size_t expect = 106096, was = 118512;
 #else
         size_t expect = v90m_mem_size(), was = expect + 12000;
 #endif
@@ -758,6 +758,8 @@ static void test_originate(void)
           CHECK_EQ_I(e1.renegotiations, 0); CHECK_EQ_I(e2.renegotiations, 0);
           CHECK(abs(e1.snr_db10 - g1.snr_db10) <= 60); CHECK(abs(e2.snr_db10 - g2.snr_db10) <= 60);
           CHECK_EQ_I(e2.ec_in_db10, -1);
+          CHECK_EQ_I(e1.stop_by, V90M_SIDE_NEAR); CHECK_EQ_I(e1.stop_why, V90M_STOP_CLEARDOWN);
+          CHECK_EQ_I(e2.stop_by, V90M_SIDE_FAR); CHECK_EQ_I(e2.stop_why, V90M_STOP_ASKED);
           CHECK(abs(e1.rtd - g1.rtd) <= 2); CHECK(abs(e2.rtd - g2.rtd) <= 2);
           printf("  kept after the end: caller SNR %d rtd %d (in data %d, %d); answerer SNR %d rtd %d (%d, %d)\n",
                  e1.snr_db10, e1.rtd, g1.snr_db10, g1.rtd, e2.snr_db10, e2.rtd, g2.snr_db10, g2.rtd); }

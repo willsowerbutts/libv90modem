@@ -83,6 +83,8 @@ static void w_put(void *u, int bit) { wctr_put(&((wend_t *)u)->in, bit); }
 
 static const dxline_cfg CLEAN = { 20, 24, 0.5, 0.5, 0.3, 0.3, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
+#define CHECK_STOP(m, b, w) do { CHECK_EQ_I((m).stop.by, DX_BY_##b); CHECK_EQ_I((m).stop.why, DX_WHY_##w); } while (0)
+
 static void report(const char *what)
 {
     printf("  %-34s %d sym/s  A->C %5d bit/s %7ld bits %ld errors   C->A %5d bit/s %7ld bits %ld errors\n",
@@ -410,6 +412,7 @@ int main(void)
         P.line.c.noise_a = 1500.0 / pow(10, 27 / 20.0);
         pair_run(8000L * 4);
         CHECK_EQ_I(P.a.state, DX_RETRAIN); CHECK_EQ_I(P.a.retrain_ours, 1);
+        CHECK_STOP(P.a, NEAR, SNR_STEP);
         CHECK_EQ_I(P.a.rate_drops, 0); CHECK_EQ_I(P.a.n_reneg, 0);
         printf("  retrain_on_step, noise steps up to -27 dB in data mode: we retrain\n");
     }
@@ -428,6 +431,8 @@ int main(void)
         }
         CHECK_EQ_I(P.a.state, DX_DATA); CHECK_EQ_I(P.c.state, DX_DATA);
         CHECK(P.a.rate_drops >= 1); CHECK(P.a.n_reneg >= 1);
+        CHECK_STOP(P.a, NEAR, SNR_DECLINED);
+        CHECK_STOP(P.c, FAR, ASKED);
         CHECK(P.a.rx_rate <= 21600 && P.a.rx_rate >= 14400); CHECK_EQ_I(P.a.tx_rate, 31200);
         sinks_reset(); pair_run(8000L * 4);
         CHECK_EQ_I(P.a.state, DX_DATA);
@@ -488,6 +493,7 @@ int main(void)
         P.line.c.mute_ca = 1; P.line.c.tone_a_hz = 1200; P.line.c.tone_amp = 1500;
         t = P.n; while (P.n < t + 4000 && P.a.state == DX_DATA) pair_run(8);
         CHECK_EQ_I(P.a.state, DX_RETRAIN); CHECK_EQ_I(P.a.retrain_ours, 0);
+        CHECK_STOP(P.a, FAR, ASKED);
         CHECK(P.n - t > 8 * 50 && P.n - t < 8 * 110);
         printf("  Tone B in data mode: retrain after %ld ms\n", (P.n - t) / 8);
         pair_init(&a, &c, &CLEAN);
@@ -504,6 +510,7 @@ int main(void)
         CHECK_EQ_I(pair_to_data(8000), 1);
         CHECK_EQ_I(v34dx_retrain(&P.a), 0);
         CHECK_EQ_I(P.a.state, DX_RETRAIN); CHECK_EQ_I(P.a.retrain_ours, 1);
+        CHECK_STOP(P.a, NEAR, ASKED);
         CHECK_EQ_I(v34dx_tick(&P.a, 0), 0);
 
         /* 11.3.2.2.1: no S from the caller within 600 ms + a round trip of the start of J */
@@ -511,6 +518,7 @@ int main(void)
         pair_init(&a, &c, &lc);
         t = 0; while (P.n < 8000L * 6 && P.a.state != DX_RETRAIN) pair_run(8);
         CHECK_EQ_I(P.a.state, DX_RETRAIN); CHECK_EQ_I(P.a.retrain_ours, 1);
+        CHECK_STOP(P.a, NEAR, TIMEOUT);
         CHECK_NEAR((P.n - (long)P.a.tx_first[DXS_J]) / 8.0, 600 + 44 / 8.0, 4);
         /* 11.3.2.2.2: the caller's S comes but its J does not */
         pair_init(&a, &c, &CLEAN);
@@ -519,6 +527,7 @@ int main(void)
         P.line.c.mute_ca = 1; t = P.n;
         while (P.n < t + 8000L * 6 && P.a.state != DX_RETRAIN) pair_run(8);
         CHECK_EQ_I(P.a.state, DX_RETRAIN); CHECK_EQ_I(P.a.retrain_ours, 1);
+        CHECK_STOP(P.a, NEAR, TIMEOUT);
         CHECK(P.n - t < 8 * 2900);
         /* Phase 4: the caller goes away, no E within 2500 ms + three round trips */
         pair_init(&a, &c, &CLEAN);
@@ -527,6 +536,7 @@ int main(void)
         P.line.c.mute_ca = 1; t = P.n;
         while (P.n < t + 8000L * 6 && P.a.state != DX_RETRAIN) pair_run(8);
         CHECK_EQ_I(P.a.state, DX_RETRAIN);
+        CHECK_STOP(P.a, NEAR, TIMEOUT);
         CHECK(P.n - t < 8 * 2600 + 3 * 44);
         /* data mode: the caller's signal stops */
         pair_init(&a, &c, &CLEAN);

@@ -358,6 +358,22 @@ typedef struct {
 } v90m_state;
 void     v90m_get_state(const v90m_t *m, v90m_state *st);
 
+/* which end began a rate renegotiation, a retrain or a cleardown */
+typedef enum { V90M_SIDE_NONE = 0, V90M_SIDE_NEAR, V90M_SIDE_FAR } v90m_side;
+/* ... and why. The far end's signals carry no reason: V90M_STOP_ASKED, its
+ * cleardown too */
+typedef enum {
+    V90M_STOP_NONE = 0,
+    V90M_STOP_ASKED,            /* near end: v90m_retrain */
+    V90M_STOP_CLEARDOWN,        /* near end: v90m_cleardown */
+    V90M_STOP_SNR_DECLINED,     /* near end: the rate needs a better signal than we receive */
+    V90M_STOP_SNR_STEP,         /* near end: the same, fallen in a step (retrain_on_step) */
+    V90M_STOP_SNR_LOW,          /* near end: well below the call's best for long (retrain_on_step) */
+    V90M_STOP_NO_SIGNAL,        /* near end: nothing is being received */
+    V90M_STOP_B1,               /* near end: a renegotiation's training failed (retrain_on_step) */
+    V90M_STOP_TIMEOUT           /* near end: training did not complete in time */
+} v90m_stop;
+
 typedef struct {
     v90m_conn  modulation;
     int        tx_bps, rx_bps;
@@ -390,6 +406,11 @@ typedef struct {
                                               them, 0.1 dB below full scale (32767 squared) */
     int        ec_near_delay, ec_near_peak, ec_near_loss_db10;
     int        ec_far_delay, ec_far_peak, ec_far_loss_db10;
+    /* (appended) V.34, either role: which end last stopped the data, or began training
+     * again (a renegotiation that became a retrain, a retrain's next attempt), and why;
+     * both 0 before the first, and in other modulations */
+    v90m_side  stop_by;
+    v90m_stop  stop_why;
 } v90m_stats;
 void     v90m_get_stats(const v90m_t *m, v90m_stats *st);
 

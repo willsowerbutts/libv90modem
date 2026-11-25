@@ -179,6 +179,7 @@ typedef struct {
     int        b212_failed;  /* a Bell 212A start got no answer: Bell 103 from now on */
     const int16_t *bpf_taps; /* the FSK receive band-pass: v21h_bpf or bell103h_bpf */
     int        connected, modulation, bitrate;
+    v34dx_stop_t v34_stop;   /* V.34: what last stopped the data, or began its training again */
     int        rx_bitrate;   /* what we receive, where it may differ (V.34); 0 = as bitrate */
     int        end;          /* ORIG_END_* once phase is ORIG_FAILED */
 } orig_t;

@@ -50,4 +50,4 @@
   far echo, then more noise          3200 sym/s  C->A 28800 bit/s  115200 bits 0 err  A->C 28800 bit/s  115200 bits 0 err  SNR 38.1 dB, rtd 2371
   more noise for good: the watch's best error 178.2, was 15.0
   long loop (13 dB down at 3 kHz)    3200 sym/s  C->A 12000 bit/s   48000 bits 0 err  A->C 24000 bit/s   96000 bits 0 err  SNR 33.3 dB, rtd 373
-orig_v34: 753 checks, 0 failures
+orig_v34: 763 checks, 0 failures

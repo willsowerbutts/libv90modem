@@ -20,6 +20,8 @@ Added (both roles):
   or more below the call's best for 30 s, as after a retrain that trained
   while the path was still moving; less and less often while that does not
   help.
+- `v90m_stats.stop_by` and `stop_why` (appended): in V.34, which end last
+  stopped the data (a rate renegotiation, a retrain, a cleardown) and why.
 
 Added (answering role):
 - `v90m_stats.ec_*` (appended): V.34's echo cancellers, in data mode.

@@ -100,6 +100,23 @@ enum {
     DX_ERR_HANGUP       /* we cleared down (v34dx_cleardown) */
 };
 
+/* what last stopped the data, or began training again: which end began the
+ * rate renegotiation, retrain or cleardown, and why. The far end's signals
+ * (S, its tone) carry no reason: DX_WHY_ASKED */
+enum { DX_BY_NONE, DX_BY_NEAR, DX_BY_FAR };
+enum {
+    DX_WHY_NONE,
+    DX_WHY_ASKED,       /* near: v34dx_renegotiate, v34dx_retrain */
+    DX_WHY_CLEARDOWN,   /* near: v34dx_cleardown */
+    DX_WHY_SNR_DECLINED, /* near: the rate needs more than we receive */
+    DX_WHY_SNR_STEP,    /* near: the same, fallen in a step (retrain_on_step) */
+    DX_WHY_SNR_LOW,     /* near: retrain_on_step's watch (v34ans) */
+    DX_WHY_NO_SIGNAL,   /* near: nothing received */
+    DX_WHY_B1,          /* near: B1 of a renegotiation wrong (retrain_on_step) */
+    DX_WHY_TIMEOUT      /* near: training did not complete in time */
+};
+typedef struct { uint8_t by, why; } v34dx_stop_t;
+
 /* transmit signals, for tx_count[] / tx_first[] */
 enum { DXS_SIL, DXS_S, DXS_SBAR, DXS_PP, DXS_TRN, DXS_J, DXS_JP, DXS_TRN4, DXS_MP, DXS_E, DXS_DATA, DXS_N };
 
@@ -172,6 +189,7 @@ typedef struct {
                                        (a time constant of 4096 symbols): what rate_down
                                        measures a fall from */
     int         rate_drops;
+    v34dx_stop_t stop;              /* not yet taken (v34dx_stop_take) */
 } v34dx_t;
 
 /* Returns 0, or -1 (state DX_FAILED, DX_ERR_CFG). */
@@ -185,6 +203,9 @@ int     v34dx_renegotiate(v34dx_t *p, int max_rx_rate);
 int     v34dx_cleardown(v34dx_t *p);
 /* From Phase 4 on: give up and ask for a retrain; the state goes to DX_RETRAIN. */
 int     v34dx_retrain(v34dx_t *p);
+
+/* The last stop, once: copied to *to when there is one not yet taken. */
+void    v34dx_stop_take(v34dx_t *p, v34dx_stop_t *to);
 
 /* The echo cancellers now. Delays are where a canceller's EC_NTAP window
  * starts, samples after we sent; a peak is ec_peak() within it. */

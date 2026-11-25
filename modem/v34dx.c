@@ -59,7 +59,14 @@ static void fail(v34dx_t *p, int err)
     stop(p); p->error = err; enter(p, DX_FAILED);
 }
 
-static void retrain(v34dx_t *p, int ours) { stop(p); p->retrain_ours = ours; enter(p, DX_RETRAIN); }
+static void stopped(v34dx_t *p, int by, int why) { p->stop.by = (uint8_t)by; p->stop.why = (uint8_t)why; }
+
+/* why: ours, for what; DX_WHY_ASKED with ours 0, the far end's tone */
+static void retrain(v34dx_t *p, int ours, int why)
+{
+    stopped(p, ours ? DX_BY_NEAR : DX_BY_FAR, why);
+    stop(p); p->retrain_ours = ours; enter(p, DX_RETRAIN);
+}
 
 static int far_poly(const v34dx_t *p) { return p->cfg.answer ? V34_GPC : V34_GPA; }
 static int own_poly(const v34dx_t *p) { return p->cfg.answer ? V34_GPA : V34_GPC; }
@@ -416,14 +423,15 @@ static void rate_down(v34dx_t *p)
      * later. Whether it fell fast tells this apart, not how far: where the
      * SNR lands after our echo moves depends on the echo, not on the rate. */
     if (p->cfg.retrain_on_step && was - now >= Q_STEP_DB10) {
-        retrain(p, 1);
+        retrain(p, 1, DX_WHY_SNR_STEP);
         return;
     }
     if (n >= cur) n = cur - 1;
-    if (n < (p->cfg.sym_rate == 2400 ? 1 : 2)) { retrain(p, 1); return; }
+    if (n < (p->cfg.sym_rate == 2400 ? 1 : 2)) { retrain(p, 1, DX_WHY_SNR_DECLINED); return; }
     p->line_n = n;
     set_mp_limits(p, 0);
     p->rate_drops++;
+    stopped(p, DX_BY_NEAR, DX_WHY_SNR_DECLINED);
     start_reneg_tx(p);
 }
 
@@ -443,7 +451,8 @@ static void s_heard(v34dx_t *p)
     reneg_begin(p);
     sres_resume(&p->sres);
     p->rxmode = RX_SRES;
-    if (p->state == DX_DATA) enter(p, DX_RN_S);
+    /* (else its answer to our own S) */
+    if (p->state == DX_DATA) { stopped(p, DX_BY_FAR, DX_WHY_ASKED); enter(p, DX_RN_S); }
 }
 
 /* ---- echo: delay search and training during the TRN of Phase 3 ---- */
@@ -573,10 +582,10 @@ static void rx_symbol(v34dx_t *p)
         case V34UP_B1_BAD:
             /* in a renegotiation (the far end's can come before our
              * rate_down sees a step): what failed is our training, not the line */
-            if (p->in_reneg && p->cfg.retrain_on_step) retrain(p, 1);
+            if (p->in_reneg && p->cfg.retrain_on_step) retrain(p, 1, DX_WHY_B1);
             else fail(p, DX_ERR_B1);
             break;
-        case V34UP_DEAD:   retrain(p, 1); break;
+        case V34UP_DEAD:   retrain(p, 1, DX_WHY_NO_SIGNAL); break;
         case V34UP_SLOW:   rate_down(p); break;
         case V34UP_LOST:   fail(p, DX_ERR_CARRIER); break;
         default: break;
@@ -638,7 +647,7 @@ int16_t v34dx_tick(v34dx_t *p, int16_t rxs)
     }
     /* the far modem's retrain tone; not during our cleardown, which goes on
      * to its own end (DX_ERR_HANGUP) */
-    if (p->state >= DX_P4_TRN && !p->clearing && tonedet_tick(&p->tone, x)) { retrain(p, 0); return y; }
+    if (p->state >= DX_P4_TRN && !p->clearing && tonedet_tick(&p->tone, x)) { retrain(p, 0, DX_WHY_ASKED); return y; }
 
     /* transmitter sequencing and time limits */
     switch (p->state) {
@@ -673,7 +682,7 @@ int16_t v34dx_tick(v34dx_t *p, int16_t rxs)
             p->tx_next = 1;
             p->t_neg = p->now; enter(p, DX_P4_TRN);
         } else if ((int64_t)p->t > MS(T_S_AFTER_J) + p->cfg.rtd + MS(p->cfg.md_len * 35)) {
-            retrain(p, 1);
+            retrain(p, 1, DX_WHY_TIMEOUT);
         }
         break;
     case DX_P3_RX:
@@ -694,7 +703,7 @@ int16_t v34dx_tick(v34dx_t *p, int16_t rxs)
                 enter(p, DX_P3_TX);
             }
         } else if ((int64_t)p->t > MS(T_FAR_J_MS) + 2 * p->cfg.rtd) {
-            retrain(p, 1);
+            retrain(p, 1, DX_WHY_TIMEOUT);
         }
         break;
     case DX_P4_TRN:
@@ -704,7 +713,7 @@ int16_t v34dx_tick(v34dx_t *p, int16_t rxs)
         lim = p->in_reneg ? MS(T_RENEG_MS) : MS(T_PHASE4_MS) + 3 * p->cfg.rtd;
         if (clk_diff(p->now, p->t_neg) > lim) {
             /* our cleardown's time-out ends it as itself, not as a retrain */
-            if (p->clearing) fail(p, DX_ERR_HANGUP); else retrain(p, 1);
+            if (p->clearing) fail(p, DX_ERR_HANGUP); else retrain(p, 1, DX_WHY_TIMEOUT);
             break;
         }
         if (p->state == DX_P4_TRN) {
@@ -739,6 +748,7 @@ int v34dx_renegotiate(v34dx_t *p, int max_rx_rate)
         p->cfg.max_rx_rate = max_rx_rate;
         set_mp_limits(p, 0);
     }
+    stopped(p, DX_BY_NEAR, DX_WHY_ASKED);
     start_reneg_tx(p);
     return 0;
 }
@@ -747,6 +757,7 @@ int v34dx_cleardown(v34dx_t *p)
 {
     if (p->state != DX_DATA) return -1;
     p->clearing = 1;
+    stopped(p, DX_BY_NEAR, DX_WHY_CLEARDOWN);
     start_reneg_tx(p);
     return 0;
 }
@@ -754,8 +765,15 @@ int v34dx_cleardown(v34dx_t *p)
 int v34dx_retrain(v34dx_t *p)
 {
     if (p->state < DX_P4_TRN || p->state >= DX_RETRAIN) return -1;
-    retrain(p, 1);
+    retrain(p, 1, DX_WHY_ASKED);
     return 0;
+}
+
+void v34dx_stop_take(v34dx_t *p, v34dx_stop_t *to)
+{
+    if (p->stop.why == DX_WHY_NONE) return;
+    *to = p->stop;
+    p->stop.why = DX_WHY_NONE;
 }
 
 static int loss_db10(const ec_t *c)

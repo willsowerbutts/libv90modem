@@ -379,6 +379,8 @@ int main(void)
             printf("  path 20 ms longer: answerer %d retrains, %d renegotiations, receives %d bit/s (was %d)\n",
                    A.retrains, A.v34.dx.n_reneg, A.rx_bitrate, rx0);
             CHECK_EQ_I(A.retrains, 1); CHECK_EQ_I(A.v34.dx.n_reneg, 0);
+            CHECK_EQ_I(A.v34_stop.by, DX_BY_NEAR); CHECK_EQ_I(A.v34_stop.why, DX_WHY_SNR_STEP);
+            CHECK_EQ_I(O.v34_stop.by, DX_BY_FAR); CHECK_EQ_I(O.v34_stop.why, DX_WHY_ASKED);
             CHECK(A.rx_bitrate >= rx0 - 2400);
             CHECK(answer_rtd(&A) >= rtd0 + 150 && answer_rtd(&A) <= rtd0 + 170);   /* measured again */
             data_ok(3);
@@ -398,6 +400,7 @@ int main(void)
             printf("  path 20 ms longer, the caller renegotiates: answerer %d retrains, phase %d; receives %d bit/s (was %d)\n",
                    A.retrains, A.phase, A.rx_bitrate, rx0);
             CHECK_EQ_I(A.retrains, 1);
+            CHECK_EQ_I(A.v34_stop.by, DX_BY_NEAR); CHECK_EQ_I(A.v34_stop.why, DX_WHY_B1);
             CHECK(A.rx_bitrate >= rx0 - 2400);
             data_ok(3);
             report("after the retrain");
@@ -432,6 +435,7 @@ int main(void)
                    low, t / 8000.0 + 5, A.rx_bitrate, rx0);
             CHECK(low < rx0 - 2400);
             CHECK_EQ_I(A.retrains, 2);
+            CHECK_EQ_I(A.v34_stop.by, DX_BY_NEAR); CHECK_EQ_I(A.v34_stop.why, DX_WHY_SNR_LOW);
             CHECK(A.rx_bitrate >= rx0 - 2400);
             data_ok(3);
             report("after the watch's retrain");
@@ -455,6 +459,7 @@ int main(void)
             printf("  path moved during the retrain's training, renegotiations every 20 s: the watch retrained %.0f s later after %d renegotiations; receives %d bit/s (was %d)\n",
                    t / 8000.0, renegs, A.rx_bitrate, rx0);
             CHECK_EQ_I(A.retrains, 2);
+            CHECK_EQ_I(A.v34_stop.by, DX_BY_NEAR); CHECK_EQ_I(A.v34_stop.why, DX_WHY_SNR_LOW);
             CHECK(renegs >= 2);
             CHECK(t < 8000L * 60);
             CHECK(A.rx_bitrate >= rx0 - 2400);

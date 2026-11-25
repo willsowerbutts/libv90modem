@@ -65,6 +65,11 @@ static void reneg_call(const char *name, unsigned cmods, unsigned amods, int con
                        s1.tx_bps, s1.rx_bps, sc.renegotiations, sa.renegotiations, sc.retrains, sa.retrains);
                 CHECK_EQ_I(sc.renegotiations, 1); CHECK_EQ_I(sa.renegotiations, 1);
                 CHECK_EQ_I(sc.retrains, 0); CHECK_EQ_I(sa.retrains, 0);
+                /* the caller asked; only V.34 says so */
+                CHECK_EQ_I(sc.stop_by, conn == V90M_CONN_V34 ? V90M_SIDE_NEAR : V90M_SIDE_NONE);
+                CHECK_EQ_I(sa.stop_by, conn == V90M_CONN_V34 ? V90M_SIDE_FAR : V90M_SIDE_NONE);
+                CHECK_EQ_I(sc.stop_why, conn == V90M_CONN_V34 ? V90M_STOP_ASKED : V90M_STOP_NONE);
+                CHECK_EQ_I(sa.stop_why, conn == V90M_CONN_V34 ? V90M_STOP_ASKED : V90M_STOP_NONE);
             }
             if (again && k == k_end) break;
             if (cut && k_cut >= 0 && s1.end != V90M_END_NONE && s2.end != V90M_END_NONE) { ended = 1; break; }

@@ -31,6 +31,12 @@ typedef char v90m_check_ec[(SAME(V90M_EC_DETECT, V42EC_DETECT) && SAME(V90M_EC_E
                             && SAME(V90M_BRK_DESTRUCTIVE_EXPEDITED, V42_BRK_DESTRUCTIVE_EXPEDITED)
                             && SAME(V90M_BRK_NONDESTRUCTIVE_EXPEDITED, V42_BRK_NONDESTRUCTIVE_EXPEDITED)) ? 1 : -1];
 
+typedef char v90m_check_stop[(SAME(V90M_SIDE_NEAR, DX_BY_NEAR) && SAME(V90M_SIDE_FAR, DX_BY_FAR)
+                              && SAME(V90M_STOP_ASKED, DX_WHY_ASKED) && SAME(V90M_STOP_CLEARDOWN, DX_WHY_CLEARDOWN)
+                              && SAME(V90M_STOP_SNR_DECLINED, DX_WHY_SNR_DECLINED) && SAME(V90M_STOP_SNR_STEP, DX_WHY_SNR_STEP)
+                              && SAME(V90M_STOP_SNR_LOW, DX_WHY_SNR_LOW) && SAME(V90M_STOP_NO_SIGNAL, DX_WHY_NO_SIGNAL)
+                              && SAME(V90M_STOP_B1, DX_WHY_B1) && SAME(V90M_STOP_TIMEOUT, DX_WHY_TIMEOUT)) ? 1 : -1];
+
 /* the strictest alignment any member can need: where a v90m_align lands
  * after a char */
 typedef struct { char c; v90m_align u; } v90m_align_probe;
@@ -470,6 +476,12 @@ void v90m_get_stats(const v90m_t *m, v90m_stats *st)
             st->ec_near_delay = e.near_delay; st->ec_near_peak = e.near_peak; st->ec_near_loss_db10 = e.near_loss_db10;
             st->ec_far_delay = e.far_delay; st->ec_far_peak = e.far_peak; st->ec_far_loss_db10 = e.far_loss_db10;
         }
+    }
+    {
+        const v34dx_stop_t *stop = orig ? &m->u.o.v34_stop : &m->u.a.v34_stop;
+        int v34 = st->modulation == V90M_CONN_V34;
+        st->stop_by = v34 ? (v90m_side)stop->by : V90M_SIDE_NONE;
+        st->stop_why = v34 ? (v90m_stop)stop->why : V90M_STOP_NONE;
     }
 }
 

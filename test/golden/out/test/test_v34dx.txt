@@ -48,4 +48,4 @@
   Tone B in data mode: retrain after 61 ms
   caller's signal lost in data mode: carrier lost after 522 ms
   as call modem after V.90 Phase 2   3200 sym/s  A->C 31200 bit/s   93600 bits 0 errors   C->A 28800 bit/s   86400 bits 0 errors
-v34dx: 811 checks, 0 failures
+v34dx: 827 checks, 0 failures

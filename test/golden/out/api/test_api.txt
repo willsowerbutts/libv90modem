@@ -57,4 +57,4 @@
   tx_level 16384 (the caller 16384), V.90 A-law back to back: data mode (56000 / 21600 bit/s)
   tx_level 16384, V.22 (a caller without 2400): V.22 1200 bit/s
   tx_level 16384 both, V.90 back to back: data mode, answerer end 0
-api: 959 checks, 0 failures
+api: 963 checks, 0 failures

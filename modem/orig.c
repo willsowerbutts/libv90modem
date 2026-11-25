@@ -445,6 +445,7 @@ int16_t orig_tick(orig_t *o, int16_t rx)
 
     case ORIG_V34:
         tx = v34orig_tick(&o->e.v34, rx);
+        if (o->connected) v34dx_stop_take(&o->e.v34.dx, &o->v34_stop);
         if (o->e.v34.state == V34O_ENDED) { fail(o, v34_end(o)); tx = 0; break; }   /* carrier loss included */
         if (o->e.v34.state == V34O_DATA) {
             /* also after a rate renegotiation or a retrain */

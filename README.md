@@ -235,7 +235,7 @@ calling side.
 ## Memory and CPU
 
 One modem, either role, takes `v90m_mem_size()` octets, at most
-`V90M_MEM_SIZE` (108 KiB) on every platform: 106384 on x86-64, 106088 on
+`V90M_MEM_SIZE` (108 KiB) on every platform: 106392 on x86-64, 106096 on
 ARMv5. The answering side's state sets it; the calling side's, whose
 modulations after V.8 share memory, is some 52 KiB, so making the calling
 side smaller no longer lowers `v90m_mem_size()`. A V.42 endpoint takes at

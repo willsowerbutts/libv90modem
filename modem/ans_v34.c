@@ -31,6 +31,7 @@ void ans_start_v34(answer_t *a)
 static int16_t tick(answer_t *a, int16_t rx)
 {
     int16_t tx = v34ans_tick(&a->v34, rx);
+    if (a->connected) v34dx_stop_take(&a->v34.dx, &a->v34_stop);
     if (a->v34.from_v90) {
         /* the caller chose V.34 in INFO1a: a retrain is Phase 2 of V.90
          * again, whoever began it (V.90 9.2.1.1.8), with the silence and

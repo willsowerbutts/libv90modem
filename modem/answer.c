@@ -150,6 +150,7 @@ void answer_init(answer_t *a, const answer_cfg *cfg)
     v8ans_init(&a->v8, 8000, (int16_t)(cfg->level * 181 / 128), &local);
     ans_enter(a, ANS_V8); a->t = 0; a->t_phase = 0; a->used_v8 = 0;
     a->connected = 0; a->modulation = ANS_MOD_NONE; a->bitrate = 0; a->rx_bitrate = 0; a->pcm = 0xFF; a->end = ANS_END_NONE; a->retrains = 0; a->retraining = 0; a->rt_recent = 0; a->rt_clock = 0;
+    memset(&a->v34_stop, 0, sizeof a->v34_stop);
     a->fbit = 1; a->cd_run = 0; a->cd_thresh = 0;
     a->info0a.c1664 = 0; a->v34.from_v90 = 0; memset(&a->v34.w, 0, sizeof a->v34.w);
     /* V.92 9.1: Phase 1 is that of V.90, and V.8 cannot say V.92 (the NOTE

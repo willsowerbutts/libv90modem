@@ -188,6 +188,7 @@ typedef struct {
                                 moves (a rate renegotiation is not a retrain: 0) */
     int        rt_recent;    /* retrains lately: one is forgotten per minute of data mode */
     int32_t    rt_clock;
+    v34dx_stop_t v34_stop;   /* V.34: what last stopped the data, or began its training again */
     /* V.92 */
     int        v92_both;     /* both INFO0 sequences indicated V.92 (9.3/V.92): the Phase 2 of
                                 every retrain is V.92's, and V.42 skips ODP / ADP (9.3.1/V.92) */

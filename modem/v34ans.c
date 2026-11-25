@@ -47,7 +47,7 @@ static void watch(v34ans_t *a)
 #endif
     w->fails++; w->since = 0;
     w->hold = !w->hold ? W_HOLD0 : w->hold > W_HOLD_MAX / 2 ? W_HOLD_MAX : w->hold * 2;
-    v34dx_retrain(&a->dx);
+    if (v34dx_retrain(&a->dx) == 0) a->dx.stop.why = DX_WHY_SNR_LOW;
 }
 
 static void p2_cfg(const v34ans_t *a, p2ans_cfg *c)

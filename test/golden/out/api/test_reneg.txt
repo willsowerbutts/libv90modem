@@ -4,4 +4,4 @@
   V.34 renegotiation cut off: ends 8 / 8, renegotiations 1 / 1
   V.90 renegotiation cut off: ends 8 / 8, renegotiations 1 / 1
   V.92 renegotiation cut off: ends 8 / 8, renegotiations 1 / 1
-renegotiations: 51 checks, 0 failures
+renegotiations: 63 checks, 0 failures
